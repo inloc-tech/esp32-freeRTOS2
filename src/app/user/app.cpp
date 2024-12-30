@@ -1,24 +1,39 @@
 
 #include "app.h"
+#include "sniffer.h"
 
 extern CALLS call;
 extern SENSORS sensors;
 extern SYSFILE sysfile;
+
+/* user calls below */
+Sniffer sniffer;
 
 app_settings app_s = {
   .fw = {
     /* version */   APP_VERSION,
     /* md5 */       ""
   },
+  // user settings
+  .sniffer = {
+    /* enabled */   false,
+    /* channel */   0,
+    /* loop */      2000,
+  }
 };
-
+/*
+bool mqttSend(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
+  return call.mqtt_send(clientID,topic,data,qos,retain);
+}
+*/
 void APP::init(){
 
-  Serial.println("Init app DEMO module");
+  Serial.println("Init app" + String(FW_MODEL) +" module");
 
   load_settings();
   log_settings();
 
+  /* user code below */
 }
 
 void APP::loop(){
@@ -28,6 +43,21 @@ void APP::loop(){
     timeoutInfo += 5000;
   }
 
+  /* user code below */
+  if(Serial1.available()){
+    msg += Serial1.readStringUntil('\n');
+    Serial.println(msg+'\n');
+    sniffer.core(msg, core_send_mqtt_message);
+    //sniffer.core(msg, mqttSend);
+    msg = "";
+  }
+/*
+  if(timeoutSniffer <= millis()){
+    timeoutSniffer = millis() + app_s.sniffer.loop;
+    sniffer.core(msg, core_send_mqtt_message);
+    msg = "";
+  }
+*/
 }
 
 /*

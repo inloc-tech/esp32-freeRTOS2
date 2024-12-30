@@ -10,13 +10,19 @@
 #include "credentials.h"
 #include "./../../../core.h"
 
-
 struct app_settings {
 
   struct fw {
     char         version[8];
     char         md5[16];
   }fw;
+
+  // user settings below
+  struct sniffer {
+    bool          enabled;
+    uint8_t       channel;
+    uint16_t      loop;
+  }sniffer;
 
 };
 
@@ -43,6 +49,10 @@ class APP{
     void parse_mqtt_messages(uint8_t clientID, String topic, String payload);
     bool getValue(JsonObject& obj, String ref){return false;};
 
+    // user public funcs
+    
+    // user public vars
+
   private:
     // do not delete the following function
     appTopics_ resolveOption(std::map<long, appTopics_> map, String topic);
@@ -52,6 +62,12 @@ class APP{
     void log_settings();
 
     uint32_t timeoutInfo;
+
+    // user private funcs
+
+    // user private vars
+    uint32_t timeoutSniffer;
+    String msg;
 };
 
 #endif

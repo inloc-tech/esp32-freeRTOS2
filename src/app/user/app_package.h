@@ -22,7 +22,7 @@
 * interface or request support. Contact developer in that case:
 * - lucas.ua.eet@gmail.com
 */
-#define FW_MODEL                  "DEMO"
+#define FW_MODEL                  "SNIFFER"
 
 /////////////////////////////////////////////////////////////////////
 //                                                                 //
@@ -52,9 +52,22 @@
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
 
-#define SERIAL1_GPIO_RX 27
-#define SERIAL1_GPIO_TX 14
+#define SERIAL1_GPIO_RX 16
+#define SERIAL1_GPIO_TX 17
 #define SERIAL1_GPIO_RTS 13
 
+/////////////////////////////////////////////////////////////////////
+//                                                                 //
+//                         DEBUG                             	   //
+//                                                                 //
+/////////////////////////////////////////////////////////////////////
+#define DEBUG_SNIFFER
+
+/////////////////////////////////////////////////////////////////////
+//                                                                 //
+//                   Libraries macros                              //
+//                                                                 //
+/////////////////////////////////////////////////////////////////////
+#define MQTT_TX_QUEUE_SIZE 20
 
 #endif
