@@ -22,7 +22,7 @@
 * interface or request support. Contact developer in that case:
 * - lucas.ua.eet@gmail.com
 */
-#define FW_MODEL                  "SNIFFER"
+#define FW_MODEL                  "sniffer-gw"
 
 
 /////////////////////////////////////////////////////////////////////
