@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <TimeLib.h>
+#include "./src/settings/settings.h"
 
 #define DOC_SIZE         3000
 #define RSSI_ARRAY_SIZE  50
