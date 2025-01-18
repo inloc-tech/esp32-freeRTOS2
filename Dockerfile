@@ -2,7 +2,7 @@ FROM zimbora/arduino-deploy-amd:latest
 
 ENV BASE_DIR=/root
 ARG PROJECT="esp32-freeRTOS2"
-ARG APP="demo"
+ARG APP="sniffer-gw"
 ARG APP_VERSION="1.0.0"
 
 # Copy the script into the container

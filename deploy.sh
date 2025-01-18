@@ -2,7 +2,7 @@
 
 home_dir="~"
 project="esp32-freeRTOS2"
-app="demo"
+app="sniffer-gw"
 fw_version="1.0.0"
 app_version="1.0.0"
 
