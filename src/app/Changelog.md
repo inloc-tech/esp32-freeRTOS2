@@ -1,7 +1,7 @@
 # Changelog
 
 ## v1.0.1
-	First function app.
+	First functionable app.
 	Supports: 
 		- settings and network configuration forward.
 		- info and fota request forward
