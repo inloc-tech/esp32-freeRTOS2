@@ -157,6 +157,5 @@ mkdir -p "images"
 filenames=$( find build/${app}/${project}* )
 cp ${filenames} images/
 cp build/${app}/build.options.json images/
-cp build/${app}/build.options.json images/
 
 mv images/${project}.ino.bin images/${project}-${fw_version}-${app}-${app_version}.ino.bin
