@@ -10,7 +10,7 @@ Sniffer::Sniffer(){
 
 void Sniffer::core(String text, MqttCallback callback){
 
-	DynamicJsonDocument doc(2048);  // 50kbytes
+	DynamicJsonDocument doc(2048*4);  // 50kbytes
 	
 	#ifdef DEBUG_SNIFFER
 		Serial.println(text);

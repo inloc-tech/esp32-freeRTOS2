@@ -47,7 +47,9 @@ void APP::loop(){
   /* user code below */
   if(Serial1.available()){
     msg += Serial1.readStringUntil('\n');
+    #ifdef DEBUG_SNIFFER
     Serial.println(msg+'\n');
+    #endif
     sniffer.core(msg, core_send_mqtt_message);
     msg = "";
   }
