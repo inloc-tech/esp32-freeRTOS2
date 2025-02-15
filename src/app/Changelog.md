@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2 - In dev
+	app user dynamic memory:
+		- Increases DynamicJsonDocument for sniffer
+		- Increases MQTT buffer size
+	Disables Debug Sniffer
+
 ## v1.0.1
 	First functionable app.
 	Supports: 
