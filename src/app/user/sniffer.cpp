@@ -32,7 +32,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		//if(settings.system.sniffing){
 			// Print the keys inside the JSON document
 		    for (JsonPair kv : doc.as<JsonObject>()) {			
-				callback(clientId,topic+"/"+String(kv.key().c_str()),kv.value().as<String>(),2,false);
+				callback(clientId,topic+"/"+String(kv.key().c_str()),kv.value().as<String>(),0,false);
 				delay(10);
 		    }
 		//}

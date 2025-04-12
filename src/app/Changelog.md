@@ -5,6 +5,7 @@
 		- Increases DynamicJsonDocument for sniffer
 		- Increases MQTT buffer size
 	Disables Debug Sniffer
+	!! changes packet qos level to 0 - test it..
 
 ## v1.0.1
 	First functionable app.
