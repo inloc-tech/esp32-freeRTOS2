@@ -964,7 +964,9 @@ void core_parse_mqtt_messages(){
 
 bool core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
 
+  #ifdef DEBUG_MQTT_TOPIC
   Serial.println(">> ["+String(clientID)+"] "+topic);
+  #endif
   #ifdef DEBUG_MQTT_PAYLOAD
     Serial.println("[data]: "+data);
   #endif
