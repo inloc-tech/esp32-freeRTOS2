@@ -26,7 +26,7 @@ void Sniffer::core(String text, MqttCallback callback){
 
 		DeserializationError error = deserializeJson(doc, text);
 
-		uint8_t clientId = 0;
+		uint8_t clientId = 1;
 		String topic = "/packet";
 
 		//if(settings.system.sniffing){
