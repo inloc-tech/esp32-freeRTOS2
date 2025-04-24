@@ -16,7 +16,7 @@ echo "fw version: $fw_version"
 docker=false
 libs="ESP32httpUpdate@2.1.145 ArduinoJson@6.19.4 
       ESP32Logger2@1.0.3 EspMQTTClientFork@1.13.4
-			Time@1.6.1 esp32-BG95@1.0.6 modem-freeRTOS@1.0.7
+			Time@1.6.1 esp32-BG95@1.0.6 modem-freeRTOS@1.0.8
 			sysfile@1.0.3 autorequest@1.0.1 alarm@1.0.1 modbusrtu@1.0.1
 			"
 
@@ -131,6 +131,11 @@ arduino-cli config dump
 for lib in $libs; do
 	echo $lib
 	arduino-cli lib install $lib
+  # Check if the last command was successful
+  if [ $? -ne 0 ]; then
+      echo "Error: Failed to install $lib"
+      exit 1  # Exit with an error status
+  fi
 done
 
 if [ "$docker" == "true" ]; then
@@ -143,10 +148,23 @@ echo "app: ${app}"
 
 arduino-cli cache clean
 
-arduino-cli compile -b esp32:esp32:esp32 \
+# Compile the project and capture output
+output=$(arduino-cli compile -b esp32:esp32:esp32 \
 --build-property build.partitions=min_spiffs \
---build-property upload.maximum_size=1966080  \
---build-path ./build/${app} . 2>&1 | tee compile_logs.txt
+--build-property upload.maximum_size=1966080 \
+--build-path ./build/${app} . 2>&1)
+
+# Check if the compilation was successful
+if [ $? -eq 0 ]; then
+  echo "Compilation successful!"
+else
+  # Log output to a file
+  echo "$output"
+  echo "Error: Compilation failed."
+  exit 1  # Exit with an error status
+fi
+
+echo "$output" | tee compile_logs.txt
 
 if [ -d "images" ]; then
   rm -r "images"
@@ -155,5 +173,6 @@ fi
 mkdir -p "images"
 
 filenames=$( find build/${app}/${project}* )
+cp compiles_logs.txt images/
 cp ${filenames} images/
 cp build/${app}/build.options.json images/
