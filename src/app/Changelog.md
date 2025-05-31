@@ -1,13 +1,14 @@
 # Changelog
 
 ## v1.0.3 - In dev
+	sends sniffed packets for 2nd mqtt connection
 
 ## v1.0.2 - Released
 	app user dynamic memory:
 		- Increases DynamicJsonDocument for sniffer
 		- Increases MQTT buffer size
 	Disables Debug Sniffer
-	!! changes packet qos level to 0 - test it..
+	changes packet qos level to 0 - test it..
 
 ## v1.0.1 - Released
 	First functionable app.
