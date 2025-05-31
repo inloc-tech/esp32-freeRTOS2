@@ -1,6 +1,7 @@
 #!/bin/bash
 
 home_dir="~"
+build="dev"
 project="esp32-freeRTOS2"
 app="sniffer-gw"
 fw_version="1.0.0"
@@ -8,10 +9,13 @@ app_version="1.0.0"
 
 # Set the path to your header file
 FILE="package.h"
+FILEAPP="./src/app/user/app_package.h"
 
 # Use grep to find the line, then sed to extract the version number
 fw_version=$(grep "#define FW_VERSION" "$FILE" | sed -E 's/#define FW_VERSION\s+"([^"]+)"/\1/')
+app_version=$(grep "#define APP_VERSION" "$FILEAPP" | sed -E 's/#define APP_VERSION\s+"([^"]+)"/\1/')
 echo "fw version: $fw_version"
+echo "app version: $app_version"
 
 docker=false
 libs="ESP32httpUpdate@2.1.145 ArduinoJson@6.19.4 
@@ -49,6 +53,11 @@ while [ "$#" -gt 0 ]; do
     -d|--directory)
       home_dir="$2"
       echo "home dir set: ${home_dir}"
+      shift 2
+      ;;
+    -b|--build)
+      build="$2"
+      echo "build set: ${build}"
       shift 2
       ;;
     -p|--project)
@@ -175,4 +184,5 @@ mkdir -p "images"
 filenames=$( find build/${app}/${project}* )
 cp compiles_logs.txt images/
 cp ${filenames} images/
+mv images/esp32-freeRTOS2.ino.bin images/${project}-${app}-${fw_version}-${app_version}-${build}.bin
 cp build/${app}/build.options.json images/
