@@ -44,7 +44,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		DeserializationError error = deserializeJson(doc, text);
 
 		uint8_t clientId = 0;
-		String topic = "/app/"+String(FW_MODEL)+"/network";
+		String topic = "/app/sniffer/network";
 
 		for (JsonPair kv : doc.as<JsonObject>()) {
 			String key = String(kv.key().c_str());
@@ -66,7 +66,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		DeserializationError error = deserializeJson(doc, text);
 
 		uint8_t clientId = 0;
-		String topic = "/app/"+String(FW_MODEL)+"/settings";
+		String topic = "/app/sniffer/settings";
 
 		//if(settings.system.sniffing){
 			// Print the keys inside the JSON document
@@ -80,7 +80,7 @@ void Sniffer::core(String text, MqttCallback callback){
 	}else if (text.indexOf("update=") > -1){
 		uint8_t clientId = 0;
 		text = text.substring(sizeof("update"));
-		callback(clientId,"/app/"+String(FW_MODEL)+"/fota/update",text,2,false);
+		callback(clientId,"/app/sniffer/fota/update",text,2,false);
 		delay(10);
 	}
 
