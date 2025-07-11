@@ -1,8 +1,7 @@
 
 #include "sniffer.h"
 
-// limit to the maximum bytes that can be transmitted over wifi
-uint8_t index_arr = 0;
+SnifferS snifferS;
 
 Sniffer::Sniffer(){
 
@@ -29,16 +28,15 @@ void Sniffer::core(String text, MqttCallback callback){
 		uint8_t clientId = 1;
 		String topic = "/packet";
 
-		//if(settings.system.sniffing){
+		if(snifferS.settings.sniffer_active){
 			// Print the keys inside the JSON document
 		    for (JsonPair kv : doc.as<JsonObject>()) {			
 				callback(clientId,topic+"/"+String(kv.key().c_str()),kv.value().as<String>(),0,false);
 				delay(10);
 		    }
-		//}
+		}
 
-	}
-	else if (text.indexOf("NETWORK=") > -1) {
+	}else if (text.indexOf("NETWORK=") > -1) {
 		text = text.substring(sizeof("NETWORK"));
 
 		DeserializationError error = deserializeJson(doc, text);
@@ -49,18 +47,29 @@ void Sniffer::core(String text, MqttCallback callback){
 		for (JsonPair kv : doc.as<JsonObject>()) {
 			String key = String(kv.key().c_str());
 			String value = kv.value().as<String>();
-			Serial.println(key+":"+value);
+			#ifdef DEBUG_SNIFFER
+				Serial.println(key+":"+value);
+			#endif
 			if(key == "ssid" && value != String(settings.wifi.ssid)){
+				if(sizeof(value) < 32)
+					memcpy(snifferS.network.ssid,value.c_str(),sizeof(value));
 				Serial1.println("ssid:"+String(settings.wifi.ssid));
 			}else if(key == "pwd" && value != String(settings.wifi.pwd)){
+				if(sizeof(value) < 32)
+					memcpy(snifferS.network.pwd,value.c_str(),sizeof(value));
 				Serial1.println("password:"+String(settings.wifi.pwd));
+			}else if(key == "channel"){
+				// check if is number
+				snifferS.network.channel = value.toInt();
+			}else if(key == "nMessages"){
+				// check if is number
+				snifferS.network.nMessages = value.toInt();
 			}
-			callback(clientId,topic+"/"+key,value,2,false);
-			delay(10);
+			//callback(clientId,topic+"/"+key,value,2,false);
+			//delay(10);
 		}
 
-	}
-	else if (text.indexOf("SETTINGS=") > -1) {
+	}else if (text.indexOf("SETTINGS=") > -1) {
 		text = text.substring(sizeof("SETTINGS"));
 
 		DeserializationError error = deserializeJson(doc, text);
@@ -68,14 +77,25 @@ void Sniffer::core(String text, MqttCallback callback){
 		uint8_t clientId = 0;
 		String topic = "/app/sniffer/settings";
 
-		//if(settings.system.sniffing){
-			// Print the keys inside the JSON document
-		    for (JsonPair kv : doc.as<JsonObject>()) {
-		    	Serial.println(String(kv.key().c_str())+":"+kv.value().as<String>());
-				callback(clientId,topic+"/"+String(kv.key().c_str()),kv.value().as<String>(),2,false);
-				delay(10);
-		    }
-		//}
+		for (JsonPair kv : doc.as<JsonObject>()) {
+			String key = String(kv.key().c_str());
+			String value = kv.value().as<String>();
+			#ifdef DEBUG_SNIFFER
+				Serial.println(key+":"+value);
+			#endif
+			if(key == "sniffer_active"){
+				// check if is number
+				snifferS.settings.sniffer_active = value.toInt();
+			}else if(key == "keepalve_period"){
+				// check if is number
+				snifferS.settings.keepalive_period = value.toInt();
+			}else if(key == "packets_period"){
+				// check if is number
+				snifferS.settings.packets_period = value.toInt();
+			}
+			//callback(clientId,topic+"/"+key,value,2,false);
+			//delay(10);
+		}
 
 	}else if (text.indexOf("update=") > -1){
 		uint8_t clientId = 0;

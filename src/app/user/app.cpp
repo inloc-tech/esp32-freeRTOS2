@@ -89,7 +89,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
   }
 
   switch(resolveOption(appTopics,topic)){
-    case settings_reset_set_:
+    case settings_reset_:
       reset_settings();
       break;
     case sniffer_reboot_:
@@ -97,10 +97,6 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
       break;
     case sniffer_reset_:
       Serial.println("Not implemented !!");
-      break;
-    case sniffer_info_:
-      Serial1.println("info");
-      core_send_mqtt_message(clientID,subtopic,"",0,true); // unpublish
       break;
     case sniffer_fota_update_:
       {  
@@ -116,7 +112,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
         }
       }
       break;
-    case sniffer_wifi_:
+    case sniffer_network_:
       {
         DeserializationError error = deserializeJson(doc, payload);
         if(error){
@@ -161,10 +157,19 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
         }
       }
       break;
+    case sniffer_network_get_:
+      {
+        String ssid = String(snifferS.network.ssid);
+        String pwd = String(snifferS.network.pwd);
+        String channel = String(snifferS.network.channel);
+        String nMessages = String(snifferS.network.nMessages);
+        String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\",\"channel\":\""+String(channel)+"\",\"nMessages\":\""+String(nMessages)+"\"}";
+        core_send_mqtt_message(clientID,subtopic,payload,2,false);
+      }
     case sniffer_log_:
       Serial.println("Not implemented !!");
       break;
-    case sniffer_keepalive_:
+    case sniffer_settings_:
       {
         DeserializationError error = deserializeJson(doc, payload);
         if(error){
@@ -172,64 +177,55 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
           return;
         }
 
-        if(doc.containsKey("active")){
+        if(doc.containsKey("sniffer_active")){
           #ifndef UNITTEST
-            String active = doc["active"];
+            String sniffer_active = doc["sniffer_active"];
           #else
-            String active = "";
-            if(doc["active"].is_string())
-              active = doc["active"];
+            String sniffer_active = "";
+            if(doc["sniffer_active"].is_string())
+              sniffer_active = doc["sniffer_active"];
           #endif
-          Serial1.println("log_active:"+active);
+          Serial1.println("active:"+sniffer_active);
           delay(100);
         }
 
-        if(doc.containsKey("period")){
+        if(doc.containsKey("keepalive_period")){
           #ifndef UNITTEST
-            String period = doc["period"];
+            String keepalive_period = doc["keepalive_period"];
           #else
-            String period = "";
-            if(doc["period"].is_string())
-              period = doc["period"];
+            String keepalive_period = "";
+            if(doc["keepalive_period"].is_string())
+              keepalive_period = doc["keepalive_period"];
           #endif
-          Serial1.println("keepalive_period:"+period);
+          Serial1.println("keepalive_period:"+keepalive_period);
+          delay(100);
+        }
+
+        if(doc.containsKey("packets_period")){
+          #ifndef UNITTEST
+            String packets_period = doc["packets_period"];
+          #else
+            String packets_period = "";
+            if(doc["packets_period"].is_string())
+              packets_period = doc["packets_period"];
+          #endif
+          Serial1.println("packets_period:"+packets_period);
           delay(100);
         }
       }
       break;
+    case sniffer_settings_get_:
+      {
+        String version = String(snifferS.fw.version);
+        String md5 = String(snifferS.fw.md5);
+        String sniffer_active = String(snifferS.settings.sniffer_active);
+        String keepalive_period = String(snifferS.settings.keepalive_period);
+        String packets_period = String(snifferS.settings.packets_period);
+        String payload = "{\"version\":\""+version+"\",\"version\":\""+md5+"\",\"sniffer_active\":\""+String(sniffer_active)+"\",\"keepalive_period\":\""+String(keepalive_period)+"\",\"packets_period\":\""+String(packets_period)+"\"}";
+        core_send_mqtt_message(clientID,subtopic,payload,2,false);
+      }
     case sniffer_serial_:
       Serial.println("Not implemented !!");
-      break;
-    case sniffer_packets_:
-      {
-        DeserializationError error = deserializeJson(doc, payload);
-        if(error){
-          Serial.println("Not Json");
-          return;
-        }
-
-        if(doc.containsKey("period")){
-          #ifndef UNITTEST
-            String period = doc["period"];
-          #else
-            String period = "";
-            if(doc["period"].is_string())
-              period = doc["period"];
-          #endif
-          Serial1.println("packets_period:"+period);
-          delay(100);
-        }
-      }
-      break;
-    case sniffer_channel_:
-      {
-        Serial1.println("channel:"+payload);
-      }
-      break;
-    case sniffer_active_:
-      {
-        Serial1.println("active:"+payload);
-      }
       break;
   }
 
