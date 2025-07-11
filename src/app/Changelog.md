@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.0.3 - In dev
+## v1.0.5
+
+## v1.0.4 - Released
+
+## v1.0.3 - Released
 	sends sniffed packets for 2nd mqtt connection
 
 ## v1.0.2 - Released
