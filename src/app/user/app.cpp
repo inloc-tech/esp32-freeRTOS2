@@ -185,7 +185,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
             if(doc["sniffer_active"].is_string())
               sniffer_active = doc["sniffer_active"];
           #endif
-          Serial1.println("active:"+sniffer_active);
+          Serial1.println("sniffer_active:"+sniffer_active);
           delay(100);
         }
 
@@ -197,7 +197,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
             if(doc["keepalive_period"].is_string())
               keepalive_period = doc["keepalive_period"];
           #endif
-          Serial1.println("keepalive_period:"+keepalive_period);
+          Serial1.println("sniffer_loop:"+keepalive_period);
           delay(100);
         }
 
@@ -217,11 +217,12 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
     case sniffer_settings_get_:
       {
         String version = String(snifferS.fw.version);
+        String uid = String(snifferS.fw.uid);
         String md5 = String(snifferS.fw.md5);
         String sniffer_active = String(snifferS.settings.sniffer_active);
         String keepalive_period = String(snifferS.settings.keepalive_period);
         String packets_period = String(snifferS.settings.packets_period);
-        String payload = "{\"version\":\""+version+"\",\"version\":\""+md5+"\",\"sniffer_active\":\""+String(sniffer_active)+"\",\"keepalive_period\":\""+String(keepalive_period)+"\",\"packets_period\":\""+String(packets_period)+"\"}";
+        String payload = "{\"version\":\""+version+"\",\"uid\":\""+uid+"\",\"md5\":\""+md5+"\",\"sniffer_active\":\""+String(sniffer_active)+"\",\"keepalive_period\":\""+String(keepalive_period)+"\",\"packets_period\":\""+String(packets_period)+"\"}";
         core_send_mqtt_message(clientID,subtopic,payload,2,false);
       }
     case sniffer_serial_:

@@ -50,14 +50,21 @@ void Sniffer::core(String text, MqttCallback callback){
 			#ifdef DEBUG_SNIFFER
 				Serial.println(key+":"+value);
 			#endif
-			if(key == "ssid" && value != String(settings.wifi.ssid)){
-				if(sizeof(value) < 32)
-					memcpy(snifferS.network.ssid,value.c_str(),sizeof(value));
-				Serial1.println("ssid:"+String(settings.wifi.ssid));
-			}else if(key == "pwd" && value != String(settings.wifi.pwd)){
-				if(sizeof(value) < 32)
-					memcpy(snifferS.network.pwd,value.c_str(),sizeof(value));
-				Serial1.println("password:"+String(settings.wifi.pwd));
+			if(key == "ssid"){
+				if(value.length() <= 32){
+					memset(snifferS.network.ssid,0,sizeof(snifferS.network.ssid));
+					memcpy(snifferS.network.ssid,value.c_str(),value.length());
+				}
+				if(value != String(settings.wifi.ssid)){
+					Serial1.println("ssid:"+String(settings.wifi.ssid));
+				}
+			}else if(key == "pwd"){
+				if(value.length() < 32){
+					memset(snifferS.network.pwd,0,sizeof(snifferS.network.pwd));
+					memcpy(snifferS.network.pwd,value.c_str(),value.length());
+				}
+				if(value != String(settings.wifi.pwd))
+					Serial1.println("password:"+String(settings.wifi.pwd));
 			}else if(key == "channel"){
 				// check if is number
 				snifferS.network.channel = value.toInt();
@@ -65,7 +72,7 @@ void Sniffer::core(String text, MqttCallback callback){
 				// check if is number
 				snifferS.network.nMessages = value.toInt();
 			}
-			//callback(clientId,topic+"/"+key,value,2,false);
+			callback(clientId,topic,text,1,false);
 			//delay(10);
 		}
 
@@ -83,17 +90,32 @@ void Sniffer::core(String text, MqttCallback callback){
 			#ifdef DEBUG_SNIFFER
 				Serial.println(key+":"+value);
 			#endif
-			if(key == "sniffer_active"){
+			if(key == "version"){
+				// check if is number
+				if(value.length() <= 8){
+					memset(snifferS.fw.version,0,sizeof(snifferS.fw.version));
+					memcpy(snifferS.fw.version,value.c_str(),value.length());
+				}
+			}else if(key == "mac"){
+				// check if is number
+				if(value.length() <= 13){
+					memset(snifferS.fw.uid,0,sizeof(snifferS.fw.uid));
+					memcpy(snifferS.fw.uid,value.c_str(),value.length());
+				}
+			}else if(key == "sniffer_active"){
 				// check if is number
 				snifferS.settings.sniffer_active = value.toInt();
-			}else if(key == "keepalve_period"){
+			}else if(key == "keepalive_period"){
 				// check if is number
 				snifferS.settings.keepalive_period = value.toInt();
-			}else if(key == "packets_period"){
+			}else if(key == "sniffer_loop"){
 				// check if is number
 				snifferS.settings.packets_period = value.toInt();
+			}else if(key == "log_level"){
+				// check if is number
+				snifferS.settings.log_level = value.toInt();
 			}
-			//callback(clientId,topic+"/"+key,value,2,false);
+			callback(clientId,topic,text,1,false);
 			//delay(10);
 		}
 

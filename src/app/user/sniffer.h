@@ -19,6 +19,7 @@ struct SnifferS {
 	struct fw {
 		char         version[8];
 		char         md5[16];
+		char         uid[13];
 	}fw;
 
 	struct network { // on settings load
@@ -32,6 +33,7 @@ struct SnifferS {
 		bool         sniffer_active;
 		uint16_t     keepalive_period;
 		uint16_t     packets_period;
+		uint16_t     log_level;
 	} settings;
 };
 
