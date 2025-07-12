@@ -166,6 +166,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
         String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\",\"channel\":\""+String(channel)+"\",\"nMessages\":\""+String(nMessages)+"\"}";
         core_send_mqtt_message(clientID,subtopic,payload,2,false);
       }
+      break;
     case sniffer_log_:
       Serial.println("Not implemented !!");
       break;
@@ -225,6 +226,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
         String payload = "{\"version\":\""+version+"\",\"uid\":\""+uid+"\",\"md5\":\""+md5+"\",\"sniffer_active\":\""+String(sniffer_active)+"\",\"keepalive_period\":\""+String(keepalive_period)+"\",\"packets_period\":\""+String(packets_period)+"\"}";
         core_send_mqtt_message(clientID,subtopic,payload,2,false);
       }
+      break;
     case sniffer_serial_:
       Serial.println("Not implemented !!");
       break;

@@ -52,12 +52,12 @@ static const std::map<long, appTopics_> appTopics {
   { (long)std::hash<std::string>{}("/app/sniffer/fota/update/set"),                  sniffer_fota_update_ },
   { (long)std::hash<std::string>{}("/app/sniffer/network/set"),                      sniffer_network_ },
   { (long)std::hash<std::string>{}("/app/sniffer/network/get"),                      sniffer_network_get_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/settings/log/set"),                 sniffer_log_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/settings/log/get"),                 sniffer_log_get_ },
+  { (long)std::hash<std::string>{}("/app/sniffer/log/set"),                 sniffer_log_ },
+  { (long)std::hash<std::string>{}("/app/sniffer/log/get"),                 sniffer_log_get_ },
   { (long)std::hash<std::string>{}("/app/sniffer/settings/set"),                     sniffer_settings_ },
   { (long)std::hash<std::string>{}("/app/sniffer/settings/get"),                     sniffer_settings_get_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/settings/serial/set"),              sniffer_serial_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/settings/serial/get"),              sniffer_serial_get_ },
+  { (long)std::hash<std::string>{}("/app/sniffer/serial/set"),              sniffer_serial_ },
+  { (long)std::hash<std::string>{}("/app/sniffer/serial/get"),              sniffer_serial_get_ },
 };
 
 class APP{

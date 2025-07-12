@@ -18,8 +18,6 @@ void Sniffer::core(String text, MqttCallback callback){
 	if(text.length() ==  0)
 		return;
 	
-	int8_t index_i = text.indexOf("PACKETS=");
-
     if (text.indexOf("PACKETS=") > -1) {
 		text = text.substring(sizeof("PACKETS"));
 
@@ -72,9 +70,9 @@ void Sniffer::core(String text, MqttCallback callback){
 				// check if is number
 				snifferS.network.nMessages = value.toInt();
 			}
-			callback(clientId,topic,text,1,false);
 			//delay(10);
 		}
+		callback(clientId,topic,text,2,false);
 
 	}else if (text.indexOf("SETTINGS=") > -1) {
 		text = text.substring(sizeof("SETTINGS"));
@@ -115,9 +113,9 @@ void Sniffer::core(String text, MqttCallback callback){
 				// check if is number
 				snifferS.settings.log_level = value.toInt();
 			}
-			callback(clientId,topic,text,1,false);
 			//delay(10);
 		}
+		callback(clientId,topic,text,2,false);
 
 	}else if (text.indexOf("update=") > -1){
 		uint8_t clientId = 0;
