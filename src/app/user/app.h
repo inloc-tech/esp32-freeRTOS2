@@ -29,35 +29,14 @@ struct app_settings {
 // user can edit it
 enum appTopics_ {
   settings_reset_,
-  sniffer_reboot_,
-  sniffer_reset_,
-  sniffer_fota_update_,
-  sniffer_network_,
-  sniffer_network_get_,
-  sniffer_log_,
-  sniffer_log_get_,
-  sniffer_settings_,
-  sniffer_settings_get_,
-  sniffer_serial_,
-  sniffer_serial_get_,
+  sniffer_route_,
   app_not_found
 };
 
-
 // user can edit it
 static const std::map<long, appTopics_> appTopics {
-  { (long)std::hash<std::string>{}("/app/settings/reset/set"),                       settings_reset_},
-  { (long)std::hash<std::string>{}("/app/sniffer/reboot/set"),                       sniffer_reboot_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/reset/set"),                        sniffer_reset_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/fota/update/set"),                  sniffer_fota_update_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/network/set"),                      sniffer_network_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/network/get"),                      sniffer_network_get_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/log/set"),                 sniffer_log_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/log/get"),                 sniffer_log_get_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/settings/set"),                     sniffer_settings_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/settings/get"),                     sniffer_settings_get_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/serial/set"),              sniffer_serial_ },
-  { (long)std::hash<std::string>{}("/app/sniffer/serial/get"),              sniffer_serial_get_ },
+  { (long)std::hash<std::string>{}("/app/settings/reset/set"),           settings_reset_},
+  { (long)std::hash<std::string>{}("/app/sniffer"),                      sniffer_route_},
 };
 
 class APP{
@@ -83,7 +62,7 @@ class APP{
     bool reset_settings();
     void log_settings();
 
-    uint32_t timeoutInfo;
+    uint32_t timeoutInfo = 5000;
 
     // user private funcs
 

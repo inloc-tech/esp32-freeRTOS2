@@ -16,19 +16,28 @@ Messages in json format are parse and forward through mqtt. Each key generates a
 
 ## MQTT
 
-Listening topics:
-	:project/:uid/app/settings/reset/set"         
-	:project/:uid/app/sniffer/reboot/set"         
-	:project/:uid/app/sniffer/reset/set"          
-	:project/:uid/app/sniffer/fota/update/set"    
-	:project/:uid/app/sniffer/network/set"        
-	:project/:uid/app/sniffer/network/get"        
-	:project/:uid/app/sniffer/settings/log/set"   
-	:project/:uid/app/sniffer/settings/log/get"   
-	:project/:uid/app/sniffer/settings/set"       
-	:project/:uid/app/sniffer/settings/get"       
-	:project/:uid/app/sniffer/settings/serial/set"
-	:project/:uid/app/sniffer/settings/serial/get"
+Listening app topics:
+	:project/:uid/app/settings/reset/set"
+	:project/:uid/app/sniffer/sniffer_uid/.."
+
+Listening sniffer topics: 
+(topics with route: :project/:uid/app/sniffer/sniffer_uid)
+	/reboot/set"         
+	/reset/set"
+	/version/get
+	/status/get
+	/fota/update/set"
+	/settings/set
+	/settings/get    
+	/settings/update    
+	/settings/wifi/set"        
+	/settings/wifi/get"        
+	/settings/log/set"   
+	/settings/log/get"   
+	/settings/packets/set"       
+	/settings/packets/get"       
+	/serial/set"
+	/serial/get"
 Messages which includes "sniffer" in topic are dispatched through serial port
 
 Messages received from serial port are parsed and stored or sent according to next topics:

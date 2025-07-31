@@ -2,8 +2,10 @@
 
 ## v1.0.5
 
-## v1.0.4 - Released
 
+## v1.0.4 - Released
+	Adds "app" to topic 
+	
 ## v1.0.3 - Released
 	sends sniffed packets for 2nd mqtt connection
 
