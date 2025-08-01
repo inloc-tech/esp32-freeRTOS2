@@ -1,7 +1,15 @@
 # Changelog
 
-## v1.0.5
+## v1.0.6 - Released
+	app: mqtt: (uid)
+		- Adds sniffer uid after "app/sniffer/" topic
+		- Adds sniffer route
 
+## v1.0.5 - Released
+	Refactoring mqtt topics for app
+		- stores all new configurations in a struct
+	Storing info from sniffer
+		- Sending packet coming from sniffer as a JSON
 
 ## v1.0.4 - Released
 	Adds "app" to topic 
