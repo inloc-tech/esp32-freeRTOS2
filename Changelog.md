@@ -13,6 +13,12 @@ After being tested with some devices, version can be changed to stable a version
   - Add uid to the header of fota request
   - Fota md5 is being well calculated but the comparison is not being well done
 
+### 1.1.10
+	Add stage release and improve prod release with environment-specific MQTT configuration (#8)
+	commit generates 1 dev build: devices.dev.inloc.cloud host
+	tag generates 1 stage build: devices.stage.inloc.cloud host
+	release generates 1 prod build: devices.inloc.cloud host
+
 ### 1.1.9
 	MQTT
 		- changes fw/settings topic to /settings
