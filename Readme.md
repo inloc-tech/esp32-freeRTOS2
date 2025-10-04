@@ -172,6 +172,7 @@ Note: all changes are made outside src/app folder
   The first connection will be always enabled\
   A second one can be activated and in that case all publish messages in app directory will\
   be redirected for this second connection
+  First connection is defined on credentials.h file MQTT_XXX_1. Can only be changed by a firmware update
 
 ### Prefix
 
@@ -189,6 +190,7 @@ Note: all changes are made outside src/app folder
   Device subscribes the following topics:
    - prefix/status
    - prefix/fw/#
+   - prefix/settings/#
    - prefix/app/#
 
   #/fw/# topic is reserved for device configurations
