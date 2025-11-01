@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.7 - dev
+	packet topic change:
+ 		- send packets to topic: "/packets/:channel"
+
 ## v1.0.6 - Released
 	app: mqtt: (uid)
 		- Adds sniffer uid after "app/sniffer/" topic

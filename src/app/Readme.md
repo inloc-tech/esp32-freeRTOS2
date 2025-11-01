@@ -44,5 +44,5 @@ Messages received from serial port are parsed and stored or sent according to ne
 	- "settings" - stored
 	- "network" - stored
 	- ":project/:uid/sniffer/fota" - sent
-	- ":project/:uid/packet" - sent
+	- ":project/:uid/packets" - sent
 
