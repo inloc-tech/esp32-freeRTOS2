@@ -23,7 +23,9 @@ void Sniffer::core(String text, MqttCallback callback){
 
 		DeserializationError error = deserializeJson(doc, text);
 
-		uint8_t clientId = 1;
+		uint8_t clientId = 0;
+		if(settings.mqtt2.active == 1)
+			clientId = 1;
 
 		String channel = String(snifferS.network.channel);
 		if(channel == "")
