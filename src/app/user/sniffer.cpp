@@ -29,7 +29,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		if(channel == "")
 			return;
 
-		String topic = "/"+channel+"/packet";
+		String topic = "/packets/"+channel;
 
 		if(snifferS.settings.sniffer_active){
 			// Print the keys inside the JSON document
