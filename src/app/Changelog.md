@@ -1,6 +1,9 @@
 # Changelog
 
-## v1.0.7 - dev
+## v1.0.8 - dev
+	fix: packets: if mqtt2 is not active sends to mqtt1 (default connection)
+	
+## v1.0.7 - Trial
 	packet topic change:
  		- send packets to topic: "/packets/:channel"
 
