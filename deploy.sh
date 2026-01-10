@@ -97,7 +97,7 @@ if [ "$build" == "stage" ]; then
     sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc"/' "$CREDENTIALS_FILE"
     sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
     echo "MQTT_HOST_1 set to devices.stage.inloc.cloud"
-    echo "WIFI_SSID set to inlocAP"
+    echo "WIFI_SSID set to Inloc"
     echo "WIFI_PASSWORD set to inlocAPpwd"
 elif [ "$build" == "prod" ]; then
     echo "Setting MQTT_HOST_1 for production environment..."
