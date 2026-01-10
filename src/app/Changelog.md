@@ -1,6 +1,9 @@
 # Changelog
 
-## v1.0.8 - dev
+## v1.0.9 - dev
+	wifi ssid change to Inloc
+
+## v1.0.8 - Released
 	fix: packets: if mqtt2 is not active sends to mqtt1 (default connection)
 	
 ## v1.0.7 - Trial
