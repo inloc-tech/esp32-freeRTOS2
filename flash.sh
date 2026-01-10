@@ -162,10 +162,10 @@ if $psk_from_mac && [ -z "$psk" ]; then
 fi
 
 echo "Step 2/5: Erasing flash..."
-#sudo esptool.py --port "${port}" erase_flash
+sudo esptool.py --port "${port}" erase_flash
 
 echo "Step 3/5: Writing firmware '${filename}' to 0x0 at 921600 baud..."
-#sudo esptool.py --port "${port}" --baud 921600 write_flash 0x0 "${filename}"
+sudo esptool.py --port "${port}" --baud 921600 write_flash 0x0 "${filename}"
 
 # Registration (optional)
 if [ -n "${register_url}" ]; then
