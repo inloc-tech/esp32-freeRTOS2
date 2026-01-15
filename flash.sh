@@ -184,7 +184,7 @@ if [ -n "${register_url}" ]; then
     jq -n \
       --arg projectName "$projectName" \
       --arg modelName "$modelName" \
-      --arg uid "$uid" \
+      --arg uid uid:"$uid" \
       --arg protocol "$protocol" \
       --arg name "${name:-}" \
       --arg psk "${psk:-}" \
