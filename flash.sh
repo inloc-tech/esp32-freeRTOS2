@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-filename="esp32-freeRTOS2.ino.merged.bin"
+filename="esp32-freeRTOS2-c5.ino.merged.bin"
 port="/dev/ttyUSB0"
 register_url="https://devices.dev.inloc.cloud/api/devices"
 token=""
