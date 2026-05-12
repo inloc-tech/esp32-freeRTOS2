@@ -58,7 +58,7 @@ PSK generation (from MAC):
   --psk-length N       Trim PSK to N characters (default: 32)
 
 Notes:
-  - Requires: esptool.py, curl, jq, openssl
+  - Requires: esptool, curl, jq, openssl
   - If --psk is not given and --psk-from-mac is set, PSK = HMAC-SHA256(secret, normalized_mac)
     formatted as hex/base64 and trimmed to --psk-length.
   - If --psk-from-mac is set without --psk-secret, a warning is shown and an unsalted SHA256 is used.
@@ -96,7 +96,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Requirements
-require_cmd esptool.py
+require_cmd esptool
 require_cmd curl
 require_cmd jq
 require_cmd openssl
@@ -115,7 +115,7 @@ if [ -n "$protocol" ]; then
 fi
 
 echo "Step 1/5: Reading ESP32 MAC..."
-MAC_OUTPUT="$(sudo esptool.py --port "${port}" read_mac 2>&1 || true)"
+MAC_OUTPUT="$(sudo esptool --port "${port}" read_mac 2>&1 || true)"
 MAC="$(printf '%s\n' "$MAC_OUTPUT" | grep -oE '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' | head -n1 || true)"
 # Normalize MAC: lowercase, remove colons (aabbccddeeff)
 MAC_NORM="$(printf '%s' "$MAC" | tr '[:upper:]' '[:lower:]' | tr -d ':')"
@@ -162,10 +162,10 @@ if $psk_from_mac && [ -z "$psk" ]; then
 fi
 
 echo "Step 2/5: Erasing flash..."
-sudo esptool.py --port "${port}" erase_flash
+sudo esptool --port "${port}" erase_flash
 
-echo "Step 3/5: Writing firmware '${filename}' to 0x0 at 921600 baud..."
-sudo esptool.py --port "${port}" --baud 921600 write_flash 0x0 "${filename}"
+echo "Step 3/5: Writing firmware '${filename}' to 0x0 at 460800 baud..."
+sudo esptool --port "${port}" --baud 460800 write_flash 0x0 "${filename}"
 
 # Registration (optional)
 if [ -n "${register_url}" ]; then
