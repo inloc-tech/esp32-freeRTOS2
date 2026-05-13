@@ -11,6 +11,9 @@ MODEMfreeRTOS mRTOS; // freeRTOS modem
 MQTT_MSG_RX* msg; // mqtt
 extern DynamicJsonDocument doc; // json
 
+// ARP table: mac string -> IP string
+std::map<String, String> arp_table;
+
 #ifdef ENABLE_AP
   void CALLBACKS_WIFI_AP::onWiFiSet(String ssid, String pass){
     settings_set_param("wifi_ssid",ssid);
@@ -974,6 +977,67 @@ void core_parse_mqtt_messages(){
         }
         break;
 #endif
+      case wifi_arp_scan_get_:
+        {
+          ARP_HOST* results = (ARP_HOST*)malloc(32 * sizeof(ARP_HOST));
+          if (results == nullptr) break;
+          uint8_t found = mRTOS.arp_scan(results, 32, 3000);
+
+          // Update ARP table: for each result, store/update mac -> ip mapping
+          for (uint8_t i = 0; i < found; i++) {
+            char macStr[13];
+            snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+              results[i].mac[0], results[i].mac[1], results[i].mac[2],
+              results[i].mac[3], results[i].mac[4], results[i].mac[5]);
+            arp_table[String(macStr)] = results[i].ip.toString();
+          }
+          free(results);
+
+          // Build JSON ARP table
+          String arp_json = "{";
+          bool first = true;
+          for (auto& entry : arp_table) {
+            if (!first) arp_json += ",";
+            arp_json += "\"" + entry.first + "\":\"" + entry.second + "\"";
+            first = false;
+          }
+          arp_json += "}";
+
+          core_send_mqtt_message(clientID, topic_get, arp_json, 2, false);
+        }
+        break;
+      case wifi_arp_table_get_:
+        {
+          // Send current ARP table as JSON
+          String arp_json = "{";
+          bool first = true;
+          for (auto& entry : arp_table) {
+            if (!first) arp_json += ",";
+            arp_json += "\"" + entry.first + "\":\"" + entry.second + "\"";
+            first = false;
+          }
+          arp_json += "}";
+
+          core_send_mqtt_message(clientID, topic_get, arp_json, 2, false);
+        }
+        break;
+      case wifi_get_:
+        {
+          String ssid    = WiFi.SSID();
+          int32_t rssi   = WiFi.RSSI();
+          int32_t channel = WiFi.channel();
+          String bssid   = WiFi.BSSIDstr();
+          bssid.toLowerCase();
+          bssid.replace(":","");
+
+          String wifi_json = "{\"ssid\":\"" + ssid +
+                             "\",\"channel\":" + String(channel) +
+                             ",\"rssi\":" + String(rssi) +
+                             ",\"bssid\":\"" + bssid + "\"}"
+          ;
+          core_send_mqtt_message(clientID, topic_get, wifi_json, 2, false);
+        }
+        break;
       default:
         //Serial.println("topic not known by fw topics");
         //Serial.println(payload);
