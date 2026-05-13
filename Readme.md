@@ -166,6 +166,26 @@ Note: all changes are made outside src/app folder
   - :prefix/fw/alarm/set : {}
   - :prefix/fw/js/code/set : (file)
 
+## WiFi
+
+  WiFi information and ARP scanning topics
+
+### Topics
+
+#### /fw/wifi/get
+  Request current WiFi connection info.\
+  Response payload: `{"ssid":"<ssid>","channel":<ch>,"rssi":<dBm>,"bssid":"<XX:XX:XX:XX:XX:XX>"}`
+
+#### /fw/wifi/arp/scan/get
+  Trigger an ARP scan of the local network (up to 32 hosts, 3000 ms timeout).\
+  Updates the internal ARP table (MAC → IP) with discovered hosts.\
+  Response payload: JSON object where each key is a MAC address and the value is its IP address.\
+  Example: `{"aabbccddeeff":"192.168.1.10","112233445566":"192.168.1.20"}`
+
+#### /fw/wifi/arp/table/get
+  Return the current in-memory ARP table without triggering a new scan.\
+  Response payload: same format as `/fw/wifi/arp/scan/get`.
+
 ## MQTT
 
   Device can have one or two connections\
@@ -244,6 +264,9 @@ sends the following topic with keepalive period:
 - [/fw/js_program/get] (#fw_js_code_get_)
 - [/fw/serial/read/get] (#fw_serial_read_)
 - [/fw/serial/write/get] (#fw_serial_write_)
+- [/fw/wifi/arp/scan/get] (#wifi_arp_scan_get_)
+- [/fw/wifi/arp/table/get] (#wifi_arp_table_get_)
+- [/fw/wifi/get] (#wifi_get_)
 
 ## Autorequests
   Use mqtt topic "#/fw/ar/set" to configure autorequests
