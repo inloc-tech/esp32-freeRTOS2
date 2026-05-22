@@ -93,6 +93,6 @@
 //                   Libraries macros                              //
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
-#define MQTT_TX_QUEUE_SIZE 50
+#define MQTT_TX_QUEUE_SIZE 20
 
 #endif
