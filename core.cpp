@@ -11,8 +11,9 @@ MODEMfreeRTOS mRTOS; // freeRTOS modem
 MQTT_MSG_RX* msg; // mqtt
 extern DynamicJsonDocument doc; // json
 
-// ARP table: mac string -> IP string
-std::map<String, String> arp_table;
+// ARP table: IP string -> { mac, hostname }
+struct ArpEntry { String mac; String hostname; };
+std::map<String, ArpEntry> arp_table;
 
 #ifdef ENABLE_AP
   void CALLBACKS_WIFI_AP::onWiFiSet(String ssid, String pass){
@@ -979,46 +980,162 @@ void core_parse_mqtt_messages(){
 #endif
       case wifi_arp_scan_get_:
         {
-          ARP_HOST* results = (ARP_HOST*)malloc(32 * sizeof(ARP_HOST));
-          if (results == nullptr) break;
-          uint8_t found = mRTOS.arp_scan(results, 32, 3000);
+          // Optional single-IP scan: payload {"ip":"x.x.x.x"}
+          StaticJsonDocument<64> ipDoc;
+          DeserializationError jerr = deserializeJson(ipDoc, payload);
+          if (!jerr && ipDoc.containsKey("ip")) {
+            String ipStr = ipDoc["ip"].as<String>();
+            IPAddress targetIP;
+            if (targetIP.fromString(ipStr)) {
+              ARP_HOST result;
+              Serial.println("ARP scanning single IP: " + ipStr);
+              if (mRTOS.arp_scan_ip(targetIP, &result, ARP_TIMEOUT_MS)) {
+                char macStr[18];
+                snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                  result.mac[0], result.mac[1], result.mac[2],
+                  result.mac[3], result.mac[4], result.mac[5]);
+                arp_table[ipStr] = { String(macStr), arp_table.count(ipStr) ? arp_table[ipStr].hostname : "" };
+              }
+              // Send only this entry
+              auto it = arp_table.find(ipStr);
+              String out = "{\"d\":[";
+              if (it != arp_table.end())
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              out += "]}";
+              core_send_mqtt_message(clientID, topic_get, out, 2, false);
+            }
+          } else {
+            // Full subnet scan
+            ARP_HOST* results = (ARP_HOST*)malloc(ARP_SCAN_MAX_HOSTS * sizeof(ARP_HOST));
+            if (results == nullptr) break;
+            Serial.println("ARP scanning subnet..");
+            uint16_t found = mRTOS.arp_scan(results, ARP_SCAN_MAX_HOSTS, ARP_TIMEOUT_MS);
+            for (uint16_t i = 0; i < found; i++) {
+              char macStr[18];
+              snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                results[i].mac[0], results[i].mac[1], results[i].mac[2],
+                results[i].mac[3], results[i].mac[4], results[i].mac[5]);
+              String ip = results[i].ip.toString();
+              arp_table[ip] = { String(macStr), arp_table.count(ip) ? arp_table[ip].hostname : "" };
+            }
+            free(results);
+            Serial.println("ARP scan found " + String(found) + " hosts");
 
-          // Update ARP table: for each result, store/update mac -> ip mapping
-          for (uint8_t i = 0; i < found; i++) {
-            char macStr[13];
-            snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
-              results[i].mac[0], results[i].mac[1], results[i].mac[2],
-              results[i].mac[3], results[i].mac[4], results[i].mac[5]);
-            arp_table[String(macStr)] = results[i].ip.toString();
+            // Send full table in chunks of 5
+            const uint8_t CHUNK = 5;
+            uint16_t total = arp_table.size();
+            uint16_t totalChunks = total > 0 ? (total + CHUNK - 1) / CHUNK : 1;
+            uint16_t chunkIdx = 0;
+            auto it = arp_table.begin();
+            while (it != arp_table.end()) {
+              String out;
+              out.reserve(300);
+              out = "{\"c\":" + String(chunkIdx) +
+                           ",\"t\":" + String(totalChunks) +
+                           ",\"d\":[";
+              for (uint8_t c = 0; c < CHUNK && it != arp_table.end(); c++, ++it) {
+                if (c > 0) out += ",";
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              }
+              out += "]}";
+              if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
+                Serial.println("[arp_scan] chunk " + String(chunkIdx) + " send FAILED");
+              chunkIdx++;
+            }
           }
-          free(results);
+        }
+        break;
+      case wifi_arpR_scan_get_:
+        {
+          // Optional single-IP scan: payload {"ip":"x.x.x.x"}
+          StaticJsonDocument<64> ipDoc;
+          DeserializationError jerr = deserializeJson(ipDoc, payload);
+          if (!jerr && ipDoc.containsKey("ip")) {
+            String ipStr = ipDoc["ip"].as<String>();
+            IPAddress targetIP;
+            if (targetIP.fromString(ipStr)) {
+              NETWORK_HOST result;
+              Serial.println("ARP+DNS scanning single IP: " + ipStr);
+              if (mRTOS.arp_scan_ip_with_name(targetIP, &result, ARP_TIMEOUT_MS, DNS_TIMEOUT_MS)) {
+                char macStr[18];
+                snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                  result.mac[0], result.mac[1], result.mac[2],
+                  result.mac[3], result.mac[4], result.mac[5]);
+                arp_table[ipStr] = { String(macStr), String(result.hostname[0] ? result.hostname : "") };
+              }
+              // Send only this entry
+              auto it = arp_table.find(ipStr);
+              String out = "{\"d\":[";
+              if (it != arp_table.end())
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              out += "]}";
+              core_send_mqtt_message(clientID, topic_get, out, 2, false);
+            }
+          } else {
+            // Full subnet scan with names
+            NETWORK_HOST* devices = (NETWORK_HOST*)malloc(ARP_SCAN_MAX_HOSTS * sizeof(NETWORK_HOST));
+            if (devices == nullptr) break;
+            uint16_t found = mRTOS.arp_scan_with_names(devices, ARP_SCAN_MAX_HOSTS, ARP_TIMEOUT_MS, DNS_TIMEOUT_MS);
+            for (uint16_t i = 0; i < found; i++) {
+              char macStr[18];
+              snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                devices[i].mac[0], devices[i].mac[1], devices[i].mac[2],
+                devices[i].mac[3], devices[i].mac[4], devices[i].mac[5]);
+              String ip = devices[i].ip.toString();
+              arp_table[ip] = { String(macStr), String(devices[i].hostname[0] ? devices[i].hostname : "") };
+            }
+            free(devices);
+            Serial.println("ARP+DNS scan complete");
 
-          // Build JSON ARP table
-          String arp_json = "{";
-          bool first = true;
-          for (auto& entry : arp_table) {
-            if (!first) arp_json += ",";
-            arp_json += "\"" + entry.first + "\":\"" + entry.second + "\"";
-            first = false;
+            // Send full table in chunks of 3
+            const uint8_t CHUNK = 3;
+            uint16_t total = arp_table.size();
+            uint16_t totalChunks = total > 0 ? (total + CHUNK - 1) / CHUNK : 1;
+            uint16_t chunkIdx = 0;
+            auto it = arp_table.begin();
+            while (it != arp_table.end()) {
+              String out;
+              out.reserve(300);
+              out = "{\"c\":" + String(chunkIdx) +
+                           ",\"t\":" + String(totalChunks) +
+                           ",\"d\":[";
+              for (uint8_t c = 0; c < CHUNK && it != arp_table.end(); c++, ++it) {
+                if (c > 0) out += ",";
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              }
+              out += "]}";
+              if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
+                Serial.println("[arpR_scan] chunk " + String(chunkIdx) + " send FAILED");
+              chunkIdx++;
+            }
           }
-          arp_json += "}";
-
-          core_send_mqtt_message(clientID, topic_get, arp_json, 2, false);
         }
         break;
       case wifi_arp_table_get_:
         {
-          // Send current ARP table as JSON
-          String arp_json = "{";
-          bool first = true;
-          for (auto& entry : arp_table) {
-            if (!first) arp_json += ",";
-            arp_json += "\"" + entry.first + "\":\"" + entry.second + "\"";
-            first = false;
+          // Send current ARP table in chunks of 3
+          const uint8_t CHUNK = 3;
+          uint16_t total = arp_table.size();
+          uint16_t totalChunks = total > 0 ? (total + CHUNK - 1) / CHUNK : 1;
+          uint16_t chunkIdx = 0;
+          auto it = arp_table.begin();
+          while (it != arp_table.end()) {
+            String out;
+            out.reserve(300);
+            out = "{\"c\":" + String(chunkIdx) +
+                         ",\"t\":" + String(totalChunks) +
+                         ",\"d\":[";
+            for (uint8_t c = 0; c < CHUNK && it != arp_table.end(); c++, ++it) {
+              if (c > 0) out += ",";
+              out += "[\"" + it->first +
+                     "\",\"" + it->second.mac +
+                     "\",\"" + it->second.hostname + "\"]";
+            }
+            out += "]}";
+            if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
+              Serial.println("[arp_table] chunk " + String(chunkIdx) + " send FAILED");
+            chunkIdx++;
           }
-          arp_json += "}";
-
-          core_send_mqtt_message(clientID, topic_get, arp_json, 2, false);
         }
         break;
       case wifi_get_:
