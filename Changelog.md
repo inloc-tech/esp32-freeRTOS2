@@ -15,6 +15,7 @@ After being tested with some devices, version can be changed to stable a version
 
 ### 1.1.11
 	supports arp requests
+	Uses modem-freeRTOS@1.0.10
 
 ### 1.1.10
 	Add stage release and improve prod release with environment-specific MQTT configuration (#8)
