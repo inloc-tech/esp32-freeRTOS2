@@ -978,7 +978,7 @@ void core_parse_mqtt_messages(){
         }
         break;
 #endif
-      case wifi_arp_scan_get_:
+      case fw_wifi_arp_scan_get_:
         {
           // Optional single-IP scan: payload {"ip":"x.x.x.x"}
           StaticJsonDocument<64> ipDoc;
@@ -1045,7 +1045,7 @@ void core_parse_mqtt_messages(){
           }
         }
         break;
-      case wifi_arpR_scan_get_:
+      case fw_wifi_arpR_scan_get_:
         {
           // Optional single-IP scan: payload {"ip":"x.x.x.x"}
           StaticJsonDocument<64> ipDoc;
@@ -1111,7 +1111,7 @@ void core_parse_mqtt_messages(){
           }
         }
         break;
-      case wifi_arp_table_get_:
+      case fw_wifi_arp_table_get_:
         {
           // Send current ARP table in chunks of 3
           const uint8_t CHUNK = 3;
@@ -1138,7 +1138,7 @@ void core_parse_mqtt_messages(){
           }
         }
         break;
-      case wifi_get_:
+      case fw_wifi_get_:
         {
           String ssid    = WiFi.SSID();
           int32_t rssi   = WiFi.RSSI();

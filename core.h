@@ -64,10 +64,10 @@ enum fwTopics_ {
   fw_alarm_get_,
   fw_serial_read_get_,
   fw_serial_write_get_,
-  wifi_arp_scan_get_,
-  wifi_arp_table_get_,
-  wifi_arpR_scan_get_,
-  wifi_get_,
+  fw_wifi_arp_scan_get_,
+  fw_wifi_arp_table_get_,
+  fw_wifi_arpR_scan_get_,
+  fw_wifi_get_,
   fw_not_found
 };
 
@@ -100,10 +100,10 @@ static const std::map<long, fwTopics_> fwTopics {
   { (long)std::hash<std::string>{}("/fw/js_program/get"),                   fw_js_program_get_ },
   { (long)std::hash<std::string>{}("/fw/serial/read/get"),                  fw_serial_read_get_ },
   { (long)std::hash<std::string>{}("/fw/serial/write/get"),                 fw_serial_write_get_ },
-  { (long)std::hash<std::string>{}("/fw/wifi/arp/scan/get"),                wifi_arp_scan_get_ },
-  { (long)std::hash<std::string>{}("/fw/wifi/arp/table/get"),               wifi_arp_table_get_ },
-  { (long)std::hash<std::string>{}("/fw/wifi/arpR/scan/get"),               wifi_arpR_scan_get_ },
-  { (long)std::hash<std::string>{}("/fw/wifi/get"),                         wifi_get_ }
+  { (long)std::hash<std::string>{}("/fw/wifi/arp/scan/get"),                fw_wifi_arp_scan_get_ },
+  { (long)std::hash<std::string>{}("/fw/wifi/arp/table/get"),               fw_wifi_arp_table_get_ },
+  { (long)std::hash<std::string>{}("/fw/wifi/arpR/scan/get"),               fw_wifi_arpR_scan_get_ },
+  { (long)std::hash<std::string>{}("/fw/wifi/get"),                         fw_wifi_get_ }
 };
 
 #ifdef ENABLE_BLE
