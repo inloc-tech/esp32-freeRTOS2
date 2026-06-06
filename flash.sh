@@ -165,7 +165,7 @@ echo "Step 2/5: Erasing flash..."
 sudo esptool --port "${port}" erase_flash
 
 echo "Step 3/5: Writing firmware '${filename}' to 0x0 at 460800 baud..."
-sudo esptool --port "${port}" --baud 460800 write_flash 0x0 "${filename}"
+sudo esptool --port "${port}" --baud 460800 write-flash 0x0 "${filename}"
 
 # Registration (optional)
 if [ -n "${register_url}" ]; then

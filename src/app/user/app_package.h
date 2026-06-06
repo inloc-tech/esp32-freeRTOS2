@@ -2,6 +2,8 @@
 #ifndef APP_PACKAGE_H
 #define APP_PACKAGE_H
 
+#include "board.h"
+
 /////////////////////////////////////////////////////////////////////
 //                                                                 //
 //                            APP Version    											 //
@@ -75,9 +77,16 @@
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
 
-#define SERIAL1_GPIO_RX 16
-#define SERIAL1_GPIO_TX 17
-#define SERIAL1_GPIO_RTS 13
+// GPIO pins are defined in board.h
+#ifndef SERIAL1_GPIO_RX
+  #define SERIAL1_GPIO_RX 16
+#endif
+#ifndef SERIAL1_GPIO_TX
+  #define SERIAL1_GPIO_TX 17
+#endif
+#ifndef SERIAL1_GPIO_RTS
+  #define SERIAL1_GPIO_RTS 13
+#endif
 
 /////////////////////////////////////////////////////////////////////
 //                                                                 //
