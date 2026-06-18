@@ -13,7 +13,11 @@ After being tested with some devices, version can be changed to stable a version
   - Add uid to the header of fota request
   - Fota md5 is being well calculated but the comparison is not being well done
 
+### 1.1.14 In dev
+	fix serial 1 for esp32c5
+
 ### 1.1.13
+Bugs: serial1 is not working.. !! esp32c5
 feat: compile dev/staging/prod images on release creation (#14)
 * feat: compile dev/staging/prod images on release publication
 	- Add a `set-matrix` pre-job that dynamically outputs which build
