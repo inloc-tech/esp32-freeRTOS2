@@ -112,7 +112,14 @@ case "$board" in
     ;;
 esac
 
-board_fqbn="esp32:esp32:${board}"
+if [ "$board" == "esp32c5" ]; then
+  # Keep Serial as HardwareSerial for libs that expect `HardwareSerial* serial = &Serial`
+  board_fqbn="esp32:esp32:${board}:CDCOnBoot=default"
+  cdc_build_flag="--build-property build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=0"
+else
+  board_fqbn="esp32:esp32:${board}"
+  cdc_build_flag=""
+fi
 
 # Modify MQTT_HOST_1 based on build type
 echo "Build type: ${build}"
