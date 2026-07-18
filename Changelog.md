@@ -13,8 +13,19 @@ After being tested with some devices, version can be changed to stable a version
   - Add uid to the header of fota request
   - Fota md5 is being well calculated but the comparison is not being well done
 
-### 1.1.14 In dev
-	fix serial 1 for esp32c5
+### 1.1.14-1.0.0
+	fix: serial 1 for esp32c5
+	perf: improve Wi-Fi startup and connectivity flow
+		- optimize `mRTOS_task` reconnect logic with timed waits on stored credentials, fallback to default credentials, and a final retry after AP provisioning
+		- improve AP provisioning portal layout and document the current Wi-Fi connection logic
+		- add `AP_PASSWORD` pre-processor support for AP credentials
+	fix: BLE and core integration
+		- fix `ENABLE_BLE` build issues
+		- add missing `get_uid` call in core flow
+	perf: deploy
+		- update modem-freeRTOS dependency to v1.0.11
+	doc: app package
+		- expand `app_package.h` inline guidance and metadata notes
 
 ### 1.1.13
 Bugs: serial1 is not working.. !! esp32c5

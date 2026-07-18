@@ -31,7 +31,6 @@ std::map<String, ArpEntry> arp_table;
 #endif
 
 #ifdef ENABLE_BLE
-  BLE_SERVER ble;
   void bleCallback(String uuid, String value){
 
     String param = "";
@@ -1304,6 +1303,10 @@ uuidTopics_ resolveOptionUUID(std::map<long, uuidTopics_> map, String param) {
   return uuid_not_found;
 }
 #endif
+
+String get_uid() {
+  return String(MQTT_UID_PREFIX) + mRTOS.macAddress();
+}
 
 String date() {
   return String(year()) + "-" + pad2(month()) + "-" + pad2(day()) + " " + pad2(hour()) + ":" + pad2(minute()) + ":" + pad2(second());
