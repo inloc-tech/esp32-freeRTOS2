@@ -103,18 +103,18 @@ done
 home_dir="${home_dir/#\~/$HOME}"
 
 case "$board" in
-  esp32|esp32c5)
+  esp32|esp32c5|esp32c5n4)
     ;;
   *)
     echo "Unsupported board: $board"
-    echo "Available boards: esp32, esp32c5"
+    echo "Available boards: esp32, esp32c5, esp32c5n4"
     exit 1
     ;;
 esac
 
 if [ "$board" == "esp32c5n4" ]; then
   board_fqbn="esp32:esp32:esp32c5:PSRAM=disabled"
-elif [ "$board" == "dev-kit-esp32c5" ]; then
+elif [ "$board" == "esp32c5" ]; then
   # Keep Serial as HardwareSerial for libs that expect `HardwareSerial* serial = &Serial`
   board_fqbn="esp32:esp32:esp32c5:CDCOnBoot=default"
   cdc_build_flag="--build-property build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=0"
@@ -151,7 +151,7 @@ elif [ "$build" == "prod" ]; then
     echo "LOG_LEVEL set to 2"
 else
     echo "Using default MQTT_HOST_1 for dev environment"
-    if [ "$board" == "esp32c5" ]; then
+    if [ "$board" == "esp32c5" || "$board" == "esp32c5n4" ]; then
         sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc-5G"/' "$CREDENTIALS_FILE"
         sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
         echo "WIFI_SSID set to Inloc-5G"
