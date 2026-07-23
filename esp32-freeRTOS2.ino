@@ -58,6 +58,7 @@ void (*callback)(uint8_t);
 void mqttOnConnect(uint8_t clientID){ // Used on LTE comms
   DBGLOG(Debug,"mqtt with clientID: "+String(clientID)+" is connected - sending first message");
   mRTOS.mqtt_pushMessage(clientID,"/status","online",2,true);
+  mRTOS.mqtt_pushMessage(clientID,"/variant",String(VARIANT),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/model",String(FW_MODEL),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/version",String(FW_VERSION),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/app_version",String(APP_VERSION),2,true);
@@ -78,6 +79,7 @@ void onConnectionEstablished(){ // Used on wifi comms
   DBGLOG(Debug,"mqtt client 1 is connected - sending first message");
 
   mRTOS.mqtt_pushMessage(CLIENTID,"/status","online",2,true);
+  mRTOS.mqtt_pushMessage(CLIENTID,"/variant",String(VARIANT),2,true);
   mRTOS.mqtt_pushMessage(CLIENTID,"/model",String(FW_MODEL),2,true);
   mRTOS.mqtt_pushMessage(CLIENTID,"/version",String(FW_VERSION),2,true);
   mRTOS.mqtt_pushMessage(CLIENTID,"/app_version",String(APP_VERSION),2,true);
@@ -92,6 +94,9 @@ void onConnectionEstablished2(){
   DBGLOG(Debug,"mqtt client 2 is connected - sending first message");
   if(!mRTOS.mqtt_pushMessage(CLIENTIDEXTERNAL,"/status","online",2,true))
     DBGLOG(Debug,"!! status message not sent for client CLIENTIDEXTERNAL");
+
+  if(!mRTOS.mqtt_pushMessage(CLIENTIDEXTERNAL,"/variant",String(VARIANT),2,true))
+    DBGLOG(Debug,"!! variant message not sent for client CLIENTIDEXTERNAL");
 
   mRTOS.mqtt_subscribeTopics(1);
 }
