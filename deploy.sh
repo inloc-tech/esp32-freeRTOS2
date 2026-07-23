@@ -112,18 +112,24 @@ case "$board" in
     ;;
 esac
 
-if [ "$board" == "esp32c5" ]; then
+if [ "$board" == "esp32c5n4" ]; then
+  board_fqbn="esp32:esp32:esp32c5:PSRAM=disabled"
+elif [ "$board" == "dev-kit-esp32c5" ]; then
   # Keep Serial as HardwareSerial for libs that expect `HardwareSerial* serial = &Serial`
-  board_fqbn="esp32:esp32:${board}:CDCOnBoot=default"
+  board_fqbn="esp32:esp32:esp32c5:CDCOnBoot=default"
   cdc_build_flag="--build-property build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=0"
 else
   board_fqbn="esp32:esp32:${board}"
-  cdc_build_flag=""
 fi
 
 # Modify MQTT_HOST_1 based on build type
 echo "Build type: ${build}"
 CREDENTIALS_FILE="./src/app/user/credentials.h"
+
+# Set FW_MODEL from selected app name for this build.
+escaped_app=$(printf '%s' "$app" | sed 's/[&/]/\\&/g')
+sed -i.bak "s|#define FW_MODEL[[:space:]]\+\"[^\"]*\"|#define FW_MODEL                \"${escaped_app}\"|" "$FILEAPP"
+echo "FW_MODEL set to: ${app}"
 
 if [ "$build" == "staging" ]; then
     echo "Setting MQTT_HOST_1 for staging environment..."
