@@ -115,8 +115,8 @@ if [ -n "$protocol" ]; then
 fi
 
 echo "Step 1/5: Reading ESP32 MAC..."
-MAC_OUTPUT="$(sudo esptool --port "${port}" read_mac 2>&1 || true)"
-MAC="$(printf '%s\n' "$MAC_OUTPUT" | grep -oE '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' | head -n1 || true)"
+MAC_OUTPUT="$(sudo esptool --port "${port}" read-mac 2>&1 || true)"
+MAC="$(printf '%s\n' "$MAC_OUTPUT" | sed -nE 's/^BASE MAC:[[:space:]]*(([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}).*/\1/p' | head -n1 || true)"
 # Normalize MAC: lowercase, remove colons (aabbccddeeff)
 MAC_NORM="$(printf '%s' "$MAC" | tr '[:upper:]' '[:lower:]' | tr -d ':')"
 if [ -z "${MAC}" ]; then
