@@ -151,17 +151,18 @@ elif [ "$build" == "prod" ]; then
     echo "LOG_LEVEL set to 2"
 else
     echo "Using default MQTT_HOST_1 for dev environment"
-    if [ "$board" == "esp32c5" || "$board" == "esp32c5n4" ]; then
-        sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc-5G"/' "$CREDENTIALS_FILE"
-        sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
-        echo "WIFI_SSID set to Inloc-5G"
-        echo "WIFI_PASSWORD set to inlocAPpwd"
-    else
-        sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc"/' "$CREDENTIALS_FILE"
-        sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
-        echo "WIFI_SSID set to Inloc"
-        echo "WIFI_PASSWORD set to inlocAPpwd"
-    fi
+fi
+
+if [[ "$board" == "esp32c5" || "$board" == "esp32c5n4" ]]; then
+    sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc-5G"/' "$CREDENTIALS_FILE"
+    sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
+    echo "WIFI_SSID set to Inloc-5G"
+    echo "WIFI_PASSWORD set to inlocAPpwd"
+else
+    sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc"/' "$CREDENTIALS_FILE"
+    sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
+    echo "WIFI_SSID set to Inloc"
+    echo "WIFI_PASSWORD set to inlocAPpwd"
 fi
 
 # Check if arduino-cli is installed
