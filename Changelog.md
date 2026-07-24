@@ -26,6 +26,13 @@ After being tested with some devices, version can be changed to stable a version
 		- update modem-freeRTOS dependency to v1.0.11
 	doc: app package
 		- expand `app_package.h` inline guidance and metadata notes
+	feat: build conditions
+		- support special build for esp32c5n4
+		- set FW_MODEL with var APP value
+	fix(flash): get mac from BASE MAC
+	feat: add preprocessor variant
+	feat: send variant through MQTT
+	ci: replaces esp32c5 by esp32c5n4 board, renames project
 
 ### 1.1.13
 Bugs: serial1 is not working.. !! esp32c5
