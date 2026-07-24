@@ -112,7 +112,7 @@ void onConnectionEstablished2(){
 
     // Own cloud
     String preTopic = String(MQTT_PROJECT);
-    mRTOS.mqtt_configure_connection(CLIENTID,CONTEXTID,preTopic.c_str(),get_uid(),MQTT_HOST_1,1883,MQTT_USER_1,MQTT_PASSWORD_1);
+    mRTOS.mqtt_configure_connection(CLIENTID,CONTEXTID,preTopic.c_str(),get_uid(),MQTT_HOST_1,1883,MQTT_USER_1,String(settings.mqtt.pass));
     mRTOS.mqtt_set_will_topic(CLIENTID,MQTT_WILL_SUBTOPIC,MQTT_WILL_PAYLOAD);
     uint8_t i = 0;
     while(i<NUMITEMS(mqtt_subscribe_topics)){
@@ -195,7 +195,7 @@ void mRTOS_task(void *pvParameters){
 
   String preTopic = String(MQTT_PROJECT);
   
-  mRTOS.mqtt_configure_connection(CLIENTID,preTopic.c_str(),uid.c_str(),MQTT_HOST_1,MQTT_PORT_1,MQTT_USER_1,MQTT_PASSWORD_1);
+  mRTOS.mqtt_configure_connection(CLIENTID,preTopic.c_str(),uid.c_str(),MQTT_HOST_1,MQTT_PORT_1,MQTT_USER_1,String(settings.mqtt.pass));
   mRTOS.mqtt_set_will_topic(CLIENTID,MQTT_WILL_SUBTOPIC,MQTT_WILL_PAYLOAD);
   DBGLOG(Debug,"mqtt client 1 configured");
 

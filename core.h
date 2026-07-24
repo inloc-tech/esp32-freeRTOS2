@@ -175,6 +175,9 @@ void      core_load_settings();
 void      core_parse_mqtt_messages();
 bool      core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t qos, bool retain);
 
+void      core_parse_usb_data();
+void      core_process_usb_command(String line);
+
 // private
 void      core_check_records();
 bool      core_send_record(String filename);

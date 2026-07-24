@@ -13,6 +13,19 @@ After being tested with some devices, version can be changed to stable a version
   - Add uid to the header of fota request
   - Fota md5 is being well calculated but the comparison is not being well done
 
+### 1.1.15-1.0.0
+	feat: usb data - PSK configuration via USB serial port
+		- Add `core_parse_usb_data()` and `core_process_usb_command()` to handle
+		  JSON commands received over the USB serial (UART0) connection
+		- Supported commands:
+		    `{"psk":"<value>"}` – store the PSK as the MQTT password for the
+		    primary cloud connection, persist to flash, and reboot
+		    `{"cmd":"get_uid"}` – return the device UID (needed for registration)
+		    `{"cmd":"get_fw"}` – return firmware version and model
+		- MQTT client 1 (own cloud) now reads the password from
+		  `settings.mqtt.pass` instead of the compile-time `MQTT_PASSWORD_1`
+		  constant, so a PSK stored via USB is automatically used on the next boot
+
 ### 1.1.14-1.0.0
 	perf: improve Wi-Fi startup and connectivity flow
 		- optimize `mRTOS_task` reconnect logic with timed waits on stored credentials, fallback to default credentials, and a final retry after AP provisioning
