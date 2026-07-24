@@ -3,7 +3,8 @@
 home_dir="$HOME"
 build="dev"
 board="esp32"
-project="esp32-freeRTOS2"
+sketch="esp32-freeRTOS2"
+project="freeRTOS2"
 app="sniffer-gw"
 fw_version="1.0.0"
 app_version="1.0.0"
@@ -122,14 +123,14 @@ else
   board_fqbn="esp32:esp32:${board}"
 fi
 
-# Modify MQTT_HOST_1 based on build type
-echo "Build type: ${build}"
-CREDENTIALS_FILE="./src/app/user/credentials.h"
-
 # Set FW_MODEL from selected app name for this build.
 escaped_app=$(printf '%s' "$app" | sed 's/[&/]/\\&/g')
 sed -i.bak "s|#define FW_MODEL[[:space:]]\+\"[^\"]*\"|#define FW_MODEL                \"${escaped_app}\"|" "$FILEAPP"
 echo "FW_MODEL set to: ${app}"
+
+# Modify MQTT_HOST_1 based on build type
+echo "Build type: ${build}"
+CREDENTIALS_FILE="./src/app/user/credentials.h"
 
 if [ "$build" == "staging" ]; then
     echo "Setting MQTT_HOST_1 for staging environment..."
@@ -302,10 +303,8 @@ if [ "$docker" == "true" ]; then
 fi
 
 echo "Installation complete!"
-sketch="esp32-freeRTOS2"
 echo "project: ${project}"
-echo "sketch: ${sketch}"
-echo "app: ${app}"
+echo "model: ${app}"
 
 arduino-cli cache clean
 
