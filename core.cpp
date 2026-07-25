@@ -219,6 +219,18 @@ void core_load_settings(){
     }
     free(data);
   }
+
+  // Load PSK from dedicated file if it exists; overrides the value in the
+  // settings blob so a PSK written via USB takes effect on the next boot
+  // without requiring the full settings struct to be rewritten.
+  char psk_buf[sizeof(settings.mqtt.pass)];
+  uint16_t psk_len = sizeof(psk_buf) - 1;
+  memset(psk_buf, 0, sizeof(psk_buf));
+  if(call.read_file(FW_PSK_FILENAME, psk_buf, &psk_len) && psk_len > 0){
+    memset(settings.mqtt.pass, 0, sizeof(settings.mqtt.pass));
+    memcpy(settings.mqtt.pass, psk_buf, psk_len);
+    Serial.println("PSK loaded from "+String(FW_PSK_FILENAME));
+  }
 }
 
 void core_init(){
@@ -295,14 +307,15 @@ void core_process_usb_command(String line) {
       Serial.println("{\"status\":\"error\",\"msg\":\"psk too long\"}");
       return;
     }
-    memset(settings.mqtt.pass, 0, sizeof(settings.mqtt.pass));
-    memcpy(settings.mqtt.pass, psk.c_str(), psk.length());
-    if (call.write_file(FW_SETTINGS_FILENAME, settings.fw.version, sizeof(settings))) {
-      Serial.println("{\"status\":\"ok\",\"msg\":\"psk saved, rebooting\"}");
-      delay(100);
-      call.fw_reboot();
+    // Write PSK to its own file so it survives across boots independently
+    // of the binary settings blob and can be loaded by core_load_settings()
+    if (call.write_file(FW_PSK_FILENAME, psk.c_str(), psk.length())) {
+      // Also update in-memory credential so any reconnect in this session picks it up
+      memset(settings.mqtt.pass, 0, sizeof(settings.mqtt.pass));
+      memcpy(settings.mqtt.pass, psk.c_str(), psk.length());
+      Serial.println("{\"status\":\"ok\",\"msg\":\"psk saved\"}");
     } else {
-      Serial.println("{\"status\":\"error\",\"msg\":\"failed to save settings\"}");
+      Serial.println("{\"status\":\"error\",\"msg\":\"failed to save psk\"}");
     }
     return;
   }
