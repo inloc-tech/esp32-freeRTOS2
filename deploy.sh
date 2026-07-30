@@ -113,16 +113,6 @@ case "$board" in
     ;;
 esac
 
-if [ "$board" == "esp32c5n4" ]; then
-  board_fqbn="esp32:esp32:esp32c5:PSRAM=disabled"
-elif [ "$board" == "esp32c5" ]; then
-  # Keep Serial as HardwareSerial for libs that expect `HardwareSerial* serial = &Serial`
-  board_fqbn="esp32:esp32:esp32c5:CDCOnBoot=default"
-  cdc_build_flag="--build-property build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=0"
-else
-  board_fqbn="esp32:esp32:${board}"
-fi
-
 # Set FW_MODEL from selected app name for this build.
 escaped_app=$(printf '%s' "$app" | sed 's/[&/]/\\&/g')
 sed -i.bak "s|#define FW_MODEL[[:space:]]\+\"[^\"]*\"|#define FW_MODEL                \"${escaped_app}\"|" "$FILEAPP"
@@ -131,6 +121,31 @@ echo "FW_MODEL set to: ${app}"
 # Modify MQTT_HOST_1 based on build type
 echo "Build type: ${build}"
 CREDENTIALS_FILE="./src/app/user/credentials.h"
+
+if [ "$board" == "esp32" ]; then
+  variant="esp32-wroom-32d"
+elif [ "$board" == "esp32c5" ]; then
+  variant="esp32c5"
+  board_fqbn="esp32:esp32:esp32c5:CDCOnBoot=default"
+  cdc_build_flag="--build-property build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=0"
+elif [ "$board" == "esp32c5n4" ]; then
+  variant="esp32c5n4"
+  board_fqbn="esp32:esp32:esp32c5:PSRAM=disabled"
+elif [ "$board" == "esp32c5n8r8" ]; then
+  variant="esp32c5n8r8"
+  board_fqbn="esp32:esp32:esp32c5:PSRAM=enabled"
+  // increase flash memory
+else
+  # add more boards here if needed
+  # increase logic for FW_VARIANT definition based on board type
+  # check memory size and other parameters if needed
+  echo "Unsupported board: $board"
+  echo "Available boards: esp32, esp32c5, esp32c5n4, esp32c5n8r8"
+  exit 1
+fi
+
+sed -i.bak "s/#define FW_VARIANT \"[^\"]*\"/#define FW_VARIANT \"$variant\"/" "$CREDENTIALS_FILE"
+echo "FW_VARIANT set to $variant"
 
 if [ "$build" == "staging" ]; then
     echo "Setting MQTT_HOST_1 for staging environment..."
@@ -339,6 +354,6 @@ for f in build/${app}/${sketch}.ino.*; do
   newname="images/${project}${f#build/${app}/${sketch}}"
   cp "$f" "$newname"
 done
-mv images/${project}.ino.bin images/${project}-${app}-${fw_version}-${app_version}-${build}-${board}.bin
-mv images/${project}.ino.merged.bin images/${project}-${app}-${fw_version}-${app_version}-${build}-${board}.merged.bin
+mv images/${project}.ino.bin images/${project}-${app}-${fw_version}-${app_version}-${build}-${variant}.bin
+mv images/${project}.ino.merged.bin images/${project}-${app}-${fw_version}-${app_version}-${build}-${variant}.merged.bin
 cp build/${app}/build.options.json images/

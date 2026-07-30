@@ -1,5 +1,8 @@
 
 #include "calls.h"
+#include "../../package.h"
+#include "../app/user/app_package.h"
+#include "../app/user/credentials.h"
 
 /*
 * !! All calls to sysfile must be done here
@@ -33,8 +36,12 @@ String CALLS::fw_fota(String url){
   String host = url.substring(0,index);
   String path = url.substring(index);
   String method = "GET";
-  String header_key = "";
-  String header_value = "";
+  String uid = String(MQTT_UID_PREFIX) + mRTOS.macAddress();
+  String header_key = "x-uid";
+  // The BG95 modem library appends the header_key:header_value token directly
+  // into the raw HTTP request string. CRLF sequences within header_value are
+  // treated as additional header lines, allowing multiple headers to be sent.
+  String header_value = uid + "\r\nx-fw-model: " + String(FW_MODEL) + "\r\nx-fw-variant: " + String(FW_VARIANT);
   String body = "";
   bool json = false;
 
@@ -407,7 +414,9 @@ String CALLS::do_fota(String protocol, String host, String path, String method, 
         String md5_calculated = md5_.toString();
         Serial.println("md5 calculated: "+md5_calculated);
         Serial.println("md5 header: "+msg_header->md5);
-        if(msg_header->md5 == md5_calculated){
+        String md5_header = msg_header->md5;
+        md5_header.trim();
+        if(md5_header.equalsIgnoreCase(md5_calculated)){
           Serial.println("md5 checked");
         }else{
           Serial.println("md5 check has failed");

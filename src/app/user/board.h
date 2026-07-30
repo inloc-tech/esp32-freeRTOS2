@@ -13,20 +13,8 @@
 //  - esp32c5    -> BOARD_ESP32C5_WIFI6_KIT_N16R8
 #if defined(CONFIG_IDF_TARGET_ESP32C5)
   #define BOARD_ESP32C5
-  // C5 module variant detection based on build configuration.
-  // Variant is identified by flash size; PSRAM state is tracked separately.
-  #if defined(CONFIG_ESPTOOLPY_FLASHSIZE_8MB) && defined(CONFIG_SPIRAM)
-    #define VARIANT "esp32c5n8r8"
-  #elif defined(CONFIG_ESPTOOLPY_FLASHSIZE_4MB)
-    #define VARIANT "esp32c5n4"
-  #else
-    #define VARIANT "esp32c5"
-  #endif
 #elif defined(CONFIG_IDF_TARGET_ESP32)
   #define BOARD_ESP32_WROOM_32D
-  #define VARIANT "esp32_wroom_32d"
-#else
-  #define VARIANT "esp32_unknown"
 #endif
 
 /////////////////////////////////////////////////////////////////////
