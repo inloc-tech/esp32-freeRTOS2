@@ -134,7 +134,7 @@ elif [ "$board" == "esp32c5n4" ]; then
 elif [ "$board" == "esp32c5n8r8" ]; then
   variant="esp32c5n8r8"
   board_fqbn="esp32:esp32:esp32c5:PSRAM=enabled"
-  // increase flash memory
+  # increase flash memory
 else
   # add more boards here if needed
   # increase logic for FW_VARIANT definition based on board type
