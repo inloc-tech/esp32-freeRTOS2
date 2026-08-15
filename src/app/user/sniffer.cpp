@@ -47,6 +47,45 @@ void Sniffer::core(String text, MqttCallback callback){
 		DeserializationError error = deserializeJson(doc, text);
 
 		uint8_t clientId = 0;
+
+		for (JsonPair kv : doc.as<JsonObject>()) {
+			String key = String(kv.key().c_str());
+			String value = kv.value().as<String>();
+			#ifdef DEBUG_SNIFFER
+				Serial.println(key+":"+value);
+			#endif
+			if(key == "bssid"){
+				value.replace(":", "");
+				value.toLowerCase();
+				if(value.length() <= 12){
+					memset(snifferS.network.bssid,0,sizeof(snifferS.network.bssid));
+					memcpy(snifferS.network.bssid,value.c_str(),value.length());
+				}
+			}else if(key == "nMessages"){
+				// check if is number
+				snifferS.network.nMessages = value.toInt();
+			}
+			//delay(10);
+		}
+
+		String uid = String(snifferS.fw.uid);
+		if(uid == "")
+			return;
+
+		
+		String nMessages = String(snifferS.network.nMessages);
+		String bssid = String(snifferS.network.bssid);
+
+		String topic = "/app/sniffer/"+uid+"/settings/network";
+		String payload = "{\"bssid\":\""+bssid+"\"}";
+		callback(clientId,topic,payload,2,false);
+
+	}else if (text.indexOf("WIFI=") > -1) {
+		text = text.substring(sizeof("WIFI"));
+
+		DeserializationError error = deserializeJson(doc, text);
+
+		uint8_t clientId = 0;
 		String uid = String(snifferS.fw.uid);
 		if(uid == "")
 			return;
@@ -75,28 +114,19 @@ void Sniffer::core(String text, MqttCallback callback){
 			}else if(key == "channel"){
 				// check if is number
 				snifferS.network.channel = value.toInt();
-			}else if(key == "nMessages"){
-				// check if is number
-				snifferS.network.nMessages = value.toInt();
 			}
-			//delay(10);
 		}
 
 		String ssid = String(snifferS.network.ssid);
 		String pwd = String(snifferS.network.pwd);
 		String channel = String(snifferS.network.channel);
-		String nMessages = String(snifferS.network.nMessages);
 
 		String topic = "/app/sniffer/"+uid+"/settings/wifi";
-		String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\"}";
+		String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\",\"channel\":\""+channel+"\"}";
 		callback(clientId,topic,payload,2,false);
 
-		topic = "/app/sniffer/"+uid+"/settings/packets";
-		payload = "{\"channel\":\""+channel+"\",\"nMessages\":\""+nMessages+"\"}";
-		callback(clientId,topic,payload,2,false);
-
-	}else if (text.indexOf("SETTINGS=") > -1) {
-		text = text.substring(sizeof("SETTINGS"));
+	}else if (text.indexOf("FIRMWARE=") > -1) {
+		text = text.substring(sizeof("FIRMWARE"));
 
 		DeserializationError error = deserializeJson(doc, text);
 
@@ -117,14 +147,23 @@ void Sniffer::core(String text, MqttCallback callback){
 					memset(snifferS.fw.version,0,sizeof(snifferS.fw.version));
 					memcpy(snifferS.fw.version,value.c_str(),value.length());
 				}
-			}else if(key == "mac"){
-				Serial.println("save mac:"+value);
-				// check if is number
-				if(value.length() <= 13){
-					memset(snifferS.fw.uid,0,sizeof(snifferS.fw.uid));
-					memcpy(snifferS.fw.uid,value.c_str(),value.length());
-				}
-			}else if(key == "sniffer_active"){
+			}
+		}
+
+	}else if (text.indexOf("SETTINGS=") > -1) {
+		text = text.substring(sizeof("SETTINGS"));
+
+		DeserializationError error = deserializeJson(doc, text);
+
+		uint8_t clientId = 0;
+
+		for (JsonPair kv : doc.as<JsonObject>()) {
+			String key = String(kv.key().c_str());
+			String value = kv.value().as<String>();
+			#ifdef DEBUG_SNIFFER
+				Serial.println(key+":"+value);
+			#endif
+			if(key == "sniffer_active"){
 				// check if is number
 				snifferS.settings.sniffer_active = value.toInt();
 			}else if(key == "keepalive_period"){
@@ -145,16 +184,12 @@ void Sniffer::core(String text, MqttCallback callback){
 		if(uid == "")
 			return;
 
-		String topic = "/app/sniffer/"+uid+"/settings/packets";
+		String topic = "/app/sniffer/"+uid+"/settings/log";
 		String sniffer_active = String(snifferS.settings.sniffer_active);
 		String packets_period = String(snifferS.settings.packets_period);
-		String payload = "{\"sniffer_active\":\""+sniffer_active+"\",\"packets_period\":\""+packets_period+"\"}";
-		callback(clientId,topic,payload,2,false);
-
-		topic = "/app/sniffer/"+uid+"/settings/log";
 		String keepalive_period = String(snifferS.settings.keepalive_period);
 		String log_level = String(snifferS.settings.log_level);
-		payload = "{\"keepalive_period\":\""+keepalive_period+"\",\"log_level\":\""+log_level+"\"}";
+		String payload = "{\"sniffer_active\":\""+sniffer_active+"\",\"packets_period\":\""+packets_period+"\",\"keepalive_period\":\""+keepalive_period+"\",\"log_level\":\""+log_level+"\"}";
 		callback(clientId,topic,payload,2,false);
 
 	}else if (text.indexOf("update=") > -1){
