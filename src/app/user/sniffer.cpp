@@ -45,6 +45,8 @@ void Sniffer::core(String text, MqttCallback callback){
 		text = text.substring(sizeof("NETWORK"));
 
 		DeserializationError error = deserializeJson(doc, text);
+		if(error)
+			return;
 
 		uint8_t clientId = 0;
 
@@ -58,6 +60,8 @@ void Sniffer::core(String text, MqttCallback callback){
 				value.replace(":", "");
 				value.toLowerCase();
 				if(value.length() <= 12){
+					memset(snifferS.fw.uid,0,sizeof(snifferS.fw.uid));
+					memcpy(snifferS.fw.uid,value.c_str(),value.length());
 					memset(snifferS.network.bssid,0,sizeof(snifferS.network.bssid));
 					memcpy(snifferS.network.bssid,value.c_str(),value.length());
 				}
@@ -71,13 +75,12 @@ void Sniffer::core(String text, MqttCallback callback){
 		String uid = String(snifferS.fw.uid);
 		if(uid == "")
 			return;
-
 		
 		String nMessages = String(snifferS.network.nMessages);
 		String bssid = String(snifferS.network.bssid);
 
 		String topic = "/app/sniffer/"+uid+"/settings/network";
-		String payload = "{\"bssid\":\""+bssid+"\"}";
+		String payload = "{\"bssid\":\""+bssid+"\",\"nMessages\":\""+nMessages+"\"}";
 		callback(clientId,topic,payload,2,false);
 
 	}else if (text.indexOf("WIFI=") > -1) {
@@ -131,6 +134,9 @@ void Sniffer::core(String text, MqttCallback callback){
 		DeserializationError error = deserializeJson(doc, text);
 
 		uint8_t clientId = 0;
+		String uid = String(snifferS.fw.uid);
+		if(uid == "")
+			return;
 
 		for (JsonPair kv : doc.as<JsonObject>()) {
 			String key = String(kv.key().c_str());
@@ -148,7 +154,35 @@ void Sniffer::core(String text, MqttCallback callback){
 					memcpy(snifferS.fw.version,value.c_str(),value.length());
 				}
 			}
+			else if(key == "model"){
+				// check if is number
+				if(value.length() <= 8){
+					if(memcmp(snifferS.fw.model,value.c_str(),value.length()) != 0){
+						fUpdateVersion = true;
+					}
+					memset(snifferS.fw.model,0,sizeof(snifferS.fw.model));
+					memcpy(snifferS.fw.model,value.c_str(),value.length());
+				}
+			}
+			else if(key == "variant"){
+				// check if is number
+				if(value.length() <= 8){
+					if(memcmp(snifferS.fw.variant,value.c_str(),value.length()) != 0){
+						fUpdateVersion = true;
+					}
+					memset(snifferS.fw.variant,0,sizeof(snifferS.fw.variant));
+					memcpy(snifferS.fw.variant,value.c_str(),value.length());
+				}
+			}
 		}
+
+		String version = String(snifferS.fw.version);
+		String model = String(snifferS.fw.model);
+		String variant = String(snifferS.fw.variant);
+
+		String topic = "/app/sniffer/"+uid+"/settings/firmware";
+		String payload = "{\"version\":\""+version+"\",\"model\":\""+model+"\",\"variant\":\""+variant+"\"}";
+		callback(clientId,topic,payload,2,false);
 
 	}else if (text.indexOf("SETTINGS=") > -1) {
 		text = text.substring(sizeof("SETTINGS"));
@@ -185,11 +219,15 @@ void Sniffer::core(String text, MqttCallback callback){
 			return;
 
 		String topic = "/app/sniffer/"+uid+"/settings/log";
-		String sniffer_active = String(snifferS.settings.sniffer_active);
-		String packets_period = String(snifferS.settings.packets_period);
 		String keepalive_period = String(snifferS.settings.keepalive_period);
 		String log_level = String(snifferS.settings.log_level);
-		String payload = "{\"sniffer_active\":\""+sniffer_active+"\",\"packets_period\":\""+packets_period+"\",\"keepalive_period\":\""+keepalive_period+"\",\"log_level\":\""+log_level+"\"}";
+		String payload = "{\"keepalive_period\":\""+keepalive_period+"\",\"log_level\":\""+log_level+"\"}";
+		callback(clientId,topic,payload,2,false);
+
+		String sniffer_active = String(snifferS.settings.sniffer_active);
+		String packets_period = String(snifferS.settings.packets_period);
+		topic = "/app/sniffer/"+uid+"/settings/sniffer";
+		payload = "{\"sniffer_active\":\""+sniffer_active+"\",\"packets_period\":\""+packets_period+"\"}";
 		callback(clientId,topic,payload,2,false);
 
 	}else if (text.indexOf("update=") > -1){

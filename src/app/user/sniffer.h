@@ -19,25 +19,28 @@ typedef bool (*MqttCallback)(uint8_t clientID, String topic, String data, uint8_
 
 struct SnifferS {
 
-	struct fw {
-		char         version[8];
-		char         md5[16];
-		char         uid[13];
-	}fw;
+  struct fw {
+    char         version[8];
+    char         model[16];
+    char         variant[16];
+    char         md5[16];
+    char         uid[13];
+  }fw;
 
-	struct network { // on settings load
-		char         ssid[32];
-		char         pwd[32];
-		uint8_t 	 channel;
-		uint32_t	 nMessages;
-	} network;
+  struct network { // on settings load
+    char         ssid[32];
+    char         pwd[32];
+    char         bssid[13];
+    uint8_t 	   channel;
+    uint32_t	   nMessages;
+  } network;
 
-	struct settings { // on settings load
-		bool         sniffer_active;
-		uint16_t     keepalive_period;
-		uint16_t     packets_period;
-		uint16_t     log_level;
-	} settings;
+  struct settings { // on settings load
+    bool         sniffer_active;
+    uint16_t     keepalive_period;
+    uint16_t     packets_period;
+    uint16_t     log_level;
+  } settings;
 };
 
 extern SnifferS snifferS;

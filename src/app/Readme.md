@@ -8,11 +8,23 @@ Reads incoming messages from MQTT and processes it.
 ## Serial
 Available messages:
 	PACKETS=<json>
+	WIFI=<json>
+	FIRMWARE=<json>
 	NETWORK=<json>
 	SETTINGS=<json>
 	update=<string>
 
-Messages in json format are parse and forward through mqtt. Each key generates a new topic.
+Serial messages are parsed as structured payloads and forwarded through MQTT.
+
+Current serial schemas:
+	- PACKETS: packet fields are forwarded one by one without changing the existing packet behavior
+	- WIFI: {"ssid":"...","pwd":"...","channel":"..."}
+	- FIRMWARE: {"version":"...","model":"...","variant":"..."}
+	- NETWORK: {"bssid":"...","nMessages":"..."}
+	- SETTINGS: {"keepalive_period":"...","sniffer_active":"...","sniffer_loop":"...","log_level":"..."}
+	- update: update=<string>
+
+The NETWORK bssid is normalized and used as the sniffer UID in MQTT topics.
 
 ## MQTT
 
@@ -41,8 +53,11 @@ Listening sniffer topics:
 Messages which includes "sniffer" in topic are dispatched through serial port
 
 Messages received from serial port are parsed and stored or sent according to next topics:
-	- "settings" - stored
-	- "network" - stored
-	- ":project/:uid/sniffer/fota" - sent
-	- ":project/:uid/packets" - sent
+	- /app/sniffer/:uid/settings/network - network identity data
+	- /app/sniffer/:uid/settings/wifi - wifi credentials
+	- /app/sniffer/:uid/settings/firmware - firmware identity
+	- /app/sniffer/:uid/settings/log - keepalive/log settings
+	- /app/sniffer/:uid/settings/sniffer - sniffer_active and packets_period
+	- /app/sniffer/:uid/fota/update - firmware update requests
+	- /packets/:channel - packet fields forwarded as separate MQTT topics
 
