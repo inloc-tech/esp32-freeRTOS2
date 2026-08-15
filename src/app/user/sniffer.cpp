@@ -224,8 +224,10 @@ void Sniffer::core(String text, MqttCallback callback){
 
 		String sniffer_active = String(snifferS.settings.sniffer_active);
 		String packets_period = String(snifferS.settings.packets_period);
-		topic = "/app/sniffer/"+uid+"/settings/sniffer";
-		payload = "{\"sniffer_active\":\""+sniffer_active+"\",\"packets_period\":\""+packets_period+"\"}";
+		String channel = String(snifferS.network.channel);
+		
+		topic = "/app/sniffer/"+uid+"/settings/packets";
+		payload = "{\"sniffer_active\":\""+sniffer_active+"\",\"packets_period\":\""+packets_period+"\",\"channel\":\""+channel+"\"}";
 		callback(clientId,topic,payload,2,false);
 
 	}else if (text.indexOf("update=") > -1){
