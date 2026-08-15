@@ -56,7 +56,7 @@ Messages received from serial port are parsed and stored or sent according to ne
 	- /app/sniffer/:uid/settings/network - network identity data
 	- /app/sniffer/:uid/settings/wifi - wifi credentials
 	- /app/sniffer/:uid/settings/firmware - firmware identity
-	- /app/sniffer/:uid/settings/log - keepalive/log settings
+	- /app/sniffer/:uid/settings/log - keepalive_period log_level
 	- /app/sniffer/:uid/settings/sniffer - sniffer_active and packets_period
 	- /app/sniffer/:uid/fota/update - firmware update requests
 	- /packets/:channel - packet fields forwarded as separate MQTT topics
