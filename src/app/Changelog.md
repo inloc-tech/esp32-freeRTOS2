@@ -1,6 +1,11 @@
 # Changelog
 
-## v1.0.9 - dev
+## v1.0.10 - Released
+	refactor sniffer serial messages
+	refactor sniffer mqtt messages
+	compatible with v2.0.4 sniffer version
+	
+## v1.0.9 - Released
 	wifi ssid change to Inloc
 
 ## v1.0.8 - Released
