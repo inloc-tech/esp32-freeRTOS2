@@ -77,7 +77,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		String nMessages = String(snifferS.network.nMessages);
 		String bssid = String(snifferS.network.bssid);
 
-		String topic = "/app/sniffer/"+uid+"/settings/network";
+		String topic = "/app/sniffer/"+uid+"/network";
 		String payload = "{\"bssid\":\""+bssid+"\",\"nMessages\":\""+nMessages+"\"}";
 		callback(clientId,topic,payload,2,false);
 
@@ -112,18 +112,14 @@ void Sniffer::core(String text, MqttCallback callback){
 				}
 				if(value != String(settings.wifi.pwd))
 					Serial1.println("password:"+String(settings.wifi.pwd));
-			}else if(key == "channel"){
-				// check if is number
-				snifferS.network.channel = value.toInt();
 			}
 		}
 
 		String ssid = String(snifferS.network.ssid);
 		String pwd = String(snifferS.network.pwd);
-		String channel = String(snifferS.network.channel);
 
 		String topic = "/app/sniffer/"+uid+"/settings/wifi";
-		String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\",\"channel\":\""+channel+"\"}";
+		String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\"}";
 		callback(clientId,topic,payload,2,false);
 
 	}else if (text.indexOf("FIRMWARE=") > -1) {
