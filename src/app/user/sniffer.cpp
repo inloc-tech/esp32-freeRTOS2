@@ -207,6 +207,9 @@ void Sniffer::core(String text, MqttCallback callback){
 			}else if(key == "log_level"){
 				// check if is number
 				snifferS.settings.log_level = value.toInt();
+			}else if(key == "channel"){
+				// check if is number
+				snifferS.network.channel = value.toInt();
 			}
 			//delay(10);
 		}
