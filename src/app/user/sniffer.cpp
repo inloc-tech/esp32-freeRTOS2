@@ -60,8 +60,6 @@ void Sniffer::core(String text, MqttCallback callback){
 				value.replace(":", "");
 				value.toLowerCase();
 				if(value.length() <= 12){
-					memset(snifferS.fw.uid,0,sizeof(snifferS.fw.uid));
-					memcpy(snifferS.fw.uid,value.c_str(),value.length());
 					memset(snifferS.network.bssid,0,sizeof(snifferS.network.bssid));
 					memcpy(snifferS.network.bssid,value.c_str(),value.length());
 				}
