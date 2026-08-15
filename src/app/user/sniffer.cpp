@@ -178,7 +178,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		String model = String(snifferS.fw.model);
 		String variant = String(snifferS.fw.variant);
 
-		String topic = "/app/sniffer/"+uid+"/settings/firmware";
+		String topic = "/app/sniffer/"+uid+"/firmware";
 		String payload = "{\"version\":\""+version+"\",\"model\":\""+model+"\",\"variant\":\""+variant+"\"}";
 		callback(clientId,topic,payload,2,false);
 
