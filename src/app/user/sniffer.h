@@ -50,6 +50,8 @@ enum snifferTopics_ {
   sniffer_reboot_,
   sniffer_reset_,
   sniffer_version_get_,
+  sniffer_model_get_,
+  sniffer_variant_get_,
   sniffer_status_get_,
   sniffer_fota_update_,
   sniffer_settings_,
