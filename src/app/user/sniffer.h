@@ -92,8 +92,6 @@ static const std::map<long, snifferTopics_> snifferTopics {
 class Sniffer
 {
   public:
-  	bool fUpdateVersion = true;
-
     Sniffer();
     void core(String msg, MqttCallback callback);
 	void parse_mqtt_messages(uint8_t clientID, String topic, String payload, MqttCallback callback);
