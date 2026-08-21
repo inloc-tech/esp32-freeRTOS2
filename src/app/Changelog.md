@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.0.10 - Released
+## v1.1.0 - Released
+	fix: recover uid, splits firmware data, fixes nMessages and logs_level, adds variant and model
+	perf: remove fUpdateVersion logic
+
+## v1.0.10 - pre-release (bugs found)
 	refactor sniffer serial messages
 	refactor sniffer mqtt messages
 	compatible with v2.0.4 sniffer version
-	
+
 ## v1.0.9 - Released
 	wifi ssid change to Inloc
 
