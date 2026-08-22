@@ -3,6 +3,7 @@
 ## v1.1.0 - Released
 	fix: recover uid, splits firmware data, fixes nMessages and logs_level, adds variant and model
 	perf: remove fUpdateVersion logic
+	ci: set board_fqbn for esp32 board
 
 ## v1.0.10 - pre-release (bugs found)
 	refactor sniffer serial messages
