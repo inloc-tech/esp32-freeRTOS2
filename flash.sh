@@ -100,6 +100,7 @@ require_cmd esptool
 require_cmd curl
 require_cmd jq
 require_cmd openssl
+require_cmd python3
 
 [ -f "$filename" ] || { echo "Error: File '$filename' not found"; exit 1; }
 [ -c "$port" ] || echo "Warning: Port '$port' not found as a character device (continuing anyway)"
@@ -217,7 +218,8 @@ if [ -n "${register_url}" ]; then
   echo "headers: ${headers[@]}"
   echo "Response code: ${http_code}"
   echo "Response body:"
-  cat "${tmp_body}" || true
+  resp_body="$(cat "${tmp_body}" 2>/dev/null || true)"
+  printf '%s\n' "${resp_body}"
   rm -f "${tmp_body}"
 
   if [[ "${http_code}" -lt 200 || "${http_code}" -ge 300 ]]; then
@@ -225,6 +227,16 @@ if [ -n "${register_url}" ]; then
     exit 1
   else
     echo "Registration succeeded."
+
+    deviceId="$(printf '%s' "${resp_body}" | jq -r '.id // .deviceId // empty' 2>/dev/null || true)"
+    if [ -n "${deviceId}" ]; then
+      echo "Step 6/6: Printing label..."
+      script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      python3 "${script_dir}/print_label.py" --connection cups --device-id "${deviceId}" --text "${uid}" || \
+        echo "Warning: label print failed (continuing)."
+    else
+      echo "Warning: could not determine deviceId from registration response; skipping label print."
+    fi
   fi
 else
   echo "Registration skipped (provide --register-url to enable)."
