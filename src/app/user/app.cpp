@@ -43,18 +43,6 @@ void APP::loop(){
   if(timeoutInfo < millis()){
     Serial.println("app is running");
     timeoutInfo += 5000;
-
-    if(sniffer.fUpdateVersion){
-      uint8_t clientID = 0;
-      String uid = String(snifferS.fw.uid);
-      if(uid == "")
-        return;
-      String subtopic = "/app/sniffer/"+uid+"/version";
-      String payload = String(snifferS.fw.version);
-      core_send_mqtt_message(clientID,subtopic,payload,2,true);
-      sniffer.fUpdateVersion = false;
-    }
-
   }
 
   /* user code below */

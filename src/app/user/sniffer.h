@@ -50,6 +50,8 @@ enum snifferTopics_ {
   sniffer_reboot_,
   sniffer_reset_,
   sniffer_version_get_,
+  sniffer_model_get_,
+  sniffer_variant_get_,
   sniffer_status_get_,
   sniffer_fota_update_,
   sniffer_settings_,
@@ -90,8 +92,6 @@ static const std::map<long, snifferTopics_> snifferTopics {
 class Sniffer
 {
   public:
-  	bool fUpdateVersion = true;
-
     Sniffer();
     void core(String msg, MqttCallback callback);
 	void parse_mqtt_messages(uint8_t clientID, String topic, String payload, MqttCallback callback);

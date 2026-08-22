@@ -37,6 +37,8 @@ Listening sniffer topics:
 	/reboot/set"         
 	/reset/set"
 	/version/get
+	/model/get
+	/variant/get
 	/status/get
 	/fota/update/set"
 	/settings/set
@@ -53,7 +55,9 @@ Listening sniffer topics:
 Messages which includes "sniffer" in topic are dispatched through serial port
 
 Messages received from serial port are parsed and stored or sent according to next topics:
-	- /app/sniffer/:uid/firmware - firmware identity
+	- /app/sniffer/:uid/version - version (FIRMWARE)
+	- /app/sniffer/:uid/model - model (FIRMWARE)
+	- /app/sniffer/:uid/variant - variant (FIRMWARE)
 	- /app/sniffer/:uid/network - network identity data
 	- /app/sniffer/:uid/settings/wifi - wifi credentials
 	- /app/sniffer/:uid/settings/log - keepalive_period log_level
