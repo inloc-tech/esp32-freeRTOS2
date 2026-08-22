@@ -124,6 +124,7 @@ CREDENTIALS_FILE="./src/app/user/credentials.h"
 
 if [ "$board" == "esp32" ]; then
   variant="esp32-wroom-32d"
+  board_fqbn="esp32:esp32:esp32"
 elif [ "$board" == "esp32c5" ]; then
   variant="esp32c5"
   board_fqbn="esp32:esp32:esp32c5:CDCOnBoot=default"
