@@ -60,6 +60,7 @@ void mqttOnConnect(uint8_t clientID){ // Used on LTE comms
   mRTOS.mqtt_pushMessage(clientID,"/status","online",2,true);
   mRTOS.mqtt_pushMessage(clientID,"/variant",String(FW_VARIANT),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/model",String(FW_MODEL),2,true);
+  mRTOS.mqtt_pushMessage(clientID,"/variant",String(FW_VARIANT),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/version",String(FW_VERSION),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/app_version",String(APP_VERSION),2,true);
   mRTOS.mqtt_pushMessage(clientID,"/tech",mRTOS.get_technology(),2,true);
@@ -103,7 +104,7 @@ void onConnectionEstablished2(){
   void network_lte_task(void *pvParameters){
     (void) pvParameters;
 
-    Serial.println("Initing LTE task..");
+    LOG_INFO("Initing LTE task..\n");
     // radio
     mRTOS.init(settings.modem.cops,settings.modem.tech,PWKEY); // initialize modem
 
@@ -153,7 +154,7 @@ void onConnectionEstablished2(){
   void app_task(void *pvParameters){
   (void) pvParameters;
 
-    Serial.println("Initing APP task..");
+    LOG_INFO("Initing APP task..\n");
 
     app.init();
 
@@ -168,7 +169,7 @@ void core_task(void *pvParameters);
 void core_task(void *pvParameters){
   (void) pvParameters;
 
-  Serial.println("Initing CORE task..");
+  LOG_INFO("Initing CORE task..\n");
 
   core_init();
       
@@ -187,9 +188,9 @@ void mRTOS_task(void *pvParameters);
 void mRTOS_task(void *pvParameters){
   (void) pvParameters;
 
-  Serial.println("Initing mRTOS task..");
+  LOG_INFO("Initing mRTOS task..\n");
 
-  Serial.println("ssid: "+String(settings.wifi.ssid));
+  LOG_INFO("ssid: %s\n", settings.wifi.ssid);
   mRTOS.init(settings.wifi.ssid,settings.wifi.pwd);
   DBGLOG(Debug,"Wifi connecting with SSID: "+String(settings.wifi.ssid));
 
@@ -222,9 +223,9 @@ void mRTOS_task(void *pvParameters){
   }
   
   #ifdef ENABLE_LTE
-    Serial.println("waiting for modem to register on network..");
+    LOG_INFO("waiting for modem to register on network..\n");
     while(!mRTOS.isLTERegistered()) delay(100);
-    Serial.println("modem is registered");
+    LOG_INFO("modem is registered\n");
   #endif
 
   uint32_t wifiTimeout = 0;
