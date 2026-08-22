@@ -402,7 +402,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 						if(doc["keepalive_period"].is_string())
 							keepalive_period = doc["keepalive_period"];
 					#endif
-					Serial1.println("sniffer_loop:"+keepalive_period);
+					Serial1.println("keepalive_period:"+keepalive_period);
 					delay(100);
 				}
 
