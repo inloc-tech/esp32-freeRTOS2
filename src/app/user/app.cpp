@@ -49,7 +49,7 @@ void APP::loop(){
   if(Serial1.available()){
     msg += Serial1.readStringUntil('\n');
     #ifdef DEBUG_SNIFFER
-    Serial.println(msg+'\n');
+    LOG_DEBUG("%s\n", msg.c_str());
     #endif
     sniffer.core(msg, core_send_mqtt_message);
     msg = "";
@@ -98,7 +98,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
         break;
       }
     case app_not_found:
-      Serial.println("app topic not found");
+      LOG_WARN("app topic not found\n");
       break;
   }
 

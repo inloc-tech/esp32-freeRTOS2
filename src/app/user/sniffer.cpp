@@ -12,7 +12,7 @@ void Sniffer::core(String text, MqttCallback callback){
 	DynamicJsonDocument doc(2048*4);  // 50kbytes
 	
 	#ifdef DEBUG_SNIFFER
-		Serial.println(text);
+		LOG_DEBUG("%s\n", text.c_str());
 	#endif
 	
 	if(text.length() ==  0)
@@ -54,7 +54,7 @@ void Sniffer::core(String text, MqttCallback callback){
 			String key = String(kv.key().c_str());
 			String value = kv.value().as<String>();
 			#ifdef DEBUG_SNIFFER
-				Serial.println(key+":"+value);
+				LOG_DEBUG("%s:%s\n", key.c_str(), value.c_str());
 			#endif
 			if(key == "bssid"){
 				value.replace(":", "");
@@ -93,7 +93,7 @@ void Sniffer::core(String text, MqttCallback callback){
 			String key = String(kv.key().c_str());
 			String value = kv.value().as<String>();
 			#ifdef DEBUG_SNIFFER
-				Serial.println(key+":"+value);
+				LOG_DEBUG("%s:%s\n", key.c_str(), value.c_str());
 			#endif
 			if(key == "ssid"){
 				if(value.length() <= 32){
@@ -136,7 +136,7 @@ void Sniffer::core(String text, MqttCallback callback){
 			String key = String(kv.key().c_str());
 			String value = kv.value().as<String>();
 			#ifdef DEBUG_SNIFFER
-				Serial.println(key+":"+value);
+				LOG_DEBUG("%s:%s\n", key.c_str(), value.c_str());
 			#endif
 			if(key == "version"){
 				// check if is number
@@ -159,7 +159,7 @@ void Sniffer::core(String text, MqttCallback callback){
 					memcpy(snifferS.fw.variant,value.c_str(),value.length());
 				}
 			}else if(key == "mac"){
-				Serial.println("save mac:"+value);
+				LOG_INFO("save mac:%s\n", value.c_str());
 				// check if is number
 				if(value.length() <= sizeof(snifferS.fw.uid)){
 					memset(snifferS.fw.uid,0,sizeof(snifferS.fw.uid));
@@ -202,7 +202,7 @@ void Sniffer::core(String text, MqttCallback callback){
 			String key = String(kv.key().c_str());
 			String value = kv.value().as<String>();
 			#ifdef DEBUG_SNIFFER
-				Serial.println(key+":"+value);
+				LOG_DEBUG("%s:%s\n", key.c_str(), value.c_str());
 			#endif
 			if(key == "sniffer_active"){
 				// check if is number
@@ -265,7 +265,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 	index = snifferTopic.indexOf("/");
 	snifferTopic = snifferTopic.substring(index); // filter uid
 
-	Serial.println("sniffer topic: "+snifferTopic);
+	LOG_DEBUG("sniffer topic: %s\n", snifferTopic.c_str());
 
 	String subtopic = "";
 	bool get = false;
@@ -282,7 +282,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			Serial1.println("reboot:1");
 			break;
 		case sniffer_reset_:
-			Serial.println("Not implemented !!");
+			LOG_WARN("Not implemented !!\n");
 			break;
 		case sniffer_version_get_:
 			{
@@ -311,7 +311,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			{  
 				DeserializationError error = deserializeJson(doc, payload);
 				if(error){
-					Serial.println("Not Json");
+					LOG_ERROR("Not Json\n");
 					return;
 				}
 
@@ -323,7 +323,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			break;
 		case sniffer_settings_get_:
 			{
-				Serial.println("settings get");
+				LOG_DEBUG("settings get\n");
 				String ssid = String(snifferS.network.ssid);
 				String pwd = String(snifferS.network.pwd);
 				String payload = "{\"ssid\":\""+ssid+"\",\"pwd\":\""+pwd+"\"}";
@@ -349,7 +349,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			{
 				DeserializationError error = deserializeJson(doc, payload);
 				if(error){
-					Serial.println("Not Json");
+					LOG_ERROR("Not Json\n");
 					return;
 				}
 
@@ -390,7 +390,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			{
 				DeserializationError error = deserializeJson(doc, payload);
 				if(error){
-					Serial.println("Not Json");
+					LOG_ERROR("Not Json\n");
 					return;
 				}
 
@@ -431,7 +431,7 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			{
 				DeserializationError error = deserializeJson(doc, payload);
 				if(error){
-					Serial.println("Not Json");
+					LOG_ERROR("Not Json\n");
 					return;
 				}
 
@@ -483,10 +483,10 @@ void Sniffer::parse_mqtt_messages(uint8_t clientID, String topic, String payload
 			}
 			break;
 		case sniffer_serial_:
-			Serial.println("Not implemented !!");
+			LOG_WARN("Not implemented !!\n");
 			break;
 		case sniffer_not_found:
-			Serial.println("sniffer topic not found");
+			LOG_WARN("sniffer topic not found\n");
 			break;
 	}
 

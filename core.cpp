@@ -982,7 +982,7 @@ void core_parse_mqtt_messages(){
             IPAddress targetIP;
             if (targetIP.fromString(ipStr)) {
               ARP_HOST result;
-              Serial.println("ARP scanning single IP: " + ipStr);
+              LOG_DEBUG("ARP scanning single IP: %s\n", ipStr.c_str());
               if (mRTOS.arp_scan_ip(targetIP, &result, ARP_TIMEOUT_MS)) {
                 char macStr[18];
                 snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
@@ -1002,7 +1002,7 @@ void core_parse_mqtt_messages(){
             // Full subnet scan
             ARP_HOST* results = (ARP_HOST*)malloc(ARP_SCAN_MAX_HOSTS * sizeof(ARP_HOST));
             if (results == nullptr) break;
-            Serial.println("ARP scanning subnet..");
+            LOG_DEBUG("ARP scanning subnet..\n");
             uint16_t found = mRTOS.arp_scan(results, ARP_SCAN_MAX_HOSTS, ARP_TIMEOUT_MS);
             for (uint16_t i = 0; i < found; i++) {
               char macStr[18];
@@ -1013,7 +1013,7 @@ void core_parse_mqtt_messages(){
               arp_table[ip] = { String(macStr), arp_table.count(ip) ? arp_table[ip].hostname : "" };
             }
             free(results);
-            Serial.println("ARP scan found " + String(found) + " hosts");
+            LOG_DEBUG("ARP scan found %d hosts\n", found);
 
             // Send full table in chunks of 5
             const uint8_t CHUNK = 5;
@@ -1033,7 +1033,7 @@ void core_parse_mqtt_messages(){
               }
               out += "]}";
               if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
-                Serial.println("[arp_scan] chunk " + String(chunkIdx) + " send FAILED");
+                LOG_WARN("[arp_scan] chunk %d send FAILED\n", chunkIdx);
               chunkIdx++;
             }
           }
@@ -1049,7 +1049,7 @@ void core_parse_mqtt_messages(){
             IPAddress targetIP;
             if (targetIP.fromString(ipStr)) {
               NETWORK_HOST result;
-              Serial.println("ARP+DNS scanning single IP: " + ipStr);
+              LOG_DEBUG("ARP+DNS scanning single IP: %s\n", ipStr.c_str());
               if (mRTOS.arp_scan_ip_with_name(targetIP, &result, ARP_TIMEOUT_MS, DNS_TIMEOUT_MS)) {
                 char macStr[18];
                 snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
@@ -1079,7 +1079,7 @@ void core_parse_mqtt_messages(){
               arp_table[ip] = { String(macStr), String(devices[i].hostname[0] ? devices[i].hostname : "") };
             }
             free(devices);
-            Serial.println("ARP+DNS scan complete");
+            LOG_DEBUG("ARP+DNS scan complete\n");
 
             // Send full table in chunks of 3
             const uint8_t CHUNK = 3;
@@ -1099,7 +1099,7 @@ void core_parse_mqtt_messages(){
               }
               out += "]}";
               if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
-                Serial.println("[arpR_scan] chunk " + String(chunkIdx) + " send FAILED");
+                LOG_WARN("[arpR_scan] chunk %d send FAILED\n", chunkIdx);
               chunkIdx++;
             }
           }
@@ -1127,7 +1127,7 @@ void core_parse_mqtt_messages(){
             }
             out += "]}";
             if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
-              Serial.println("[arp_table] chunk " + String(chunkIdx) + " send FAILED");
+              LOG_WARN("[arp_table] chunk %d send FAILED\n", chunkIdx);
             chunkIdx++;
           }
         }
