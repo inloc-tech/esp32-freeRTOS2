@@ -219,6 +219,18 @@ void core_load_settings(){
     }
     free(data);
   }
+
+  // Load PSK from dedicated file if it exists; overrides the value in the
+  // settings blob so a PSK written via USB takes effect on the next boot
+  // without requiring the full settings struct to be rewritten.
+  char psk_buf[sizeof(settings.mqtt.pass)];
+  uint16_t psk_len = sizeof(psk_buf) - 1;
+  memset(psk_buf, 0, sizeof(psk_buf));
+  if(call.read_file(FW_PSK_FILENAME, psk_buf, &psk_len) && psk_len > 0){
+    memset(settings.mqtt.pass, 0, sizeof(settings.mqtt.pass));
+    memcpy(settings.mqtt.pass, psk_buf, psk_len);
+    Serial.println("PSK loaded from "+String(FW_PSK_FILENAME));
+  }
 }
 
 void core_init(){
@@ -275,6 +287,72 @@ void core_init(){
   #endif
 }
 
+static String usb_serial_buffer = "";
+
+void core_process_usb_command(String line) {
+  StaticJsonDocument<256> usb_doc;
+  DeserializationError error = deserializeJson(usb_doc, line);
+  if (error) {
+    Serial.println("{\"status\":\"error\",\"msg\":\"invalid json\"}");
+    return;
+  }
+
+  if (usb_doc.containsKey("psk")) {
+    String psk = usb_doc["psk"].as<String>();
+    if (psk.length() == 0) {
+      Serial.println("{\"status\":\"error\",\"msg\":\"psk is empty\"}");
+      return;
+    }
+    if (psk.length() > sizeof(settings.mqtt.pass) - 1) {
+      Serial.println("{\"status\":\"error\",\"msg\":\"psk too long\"}");
+      return;
+    }
+    // Write PSK to its own file so it survives across boots independently
+    // of the binary settings blob and can be loaded by core_load_settings()
+    if (call.write_file(FW_PSK_FILENAME, psk.c_str(), psk.length())) {
+      // Also update in-memory credential so any reconnect in this session picks it up
+      memset(settings.mqtt.pass, 0, sizeof(settings.mqtt.pass));
+      memcpy(settings.mqtt.pass, psk.c_str(), psk.length());
+      Serial.println("{\"status\":\"ok\",\"msg\":\"psk saved\"}");
+    } else {
+      Serial.println("{\"status\":\"error\",\"msg\":\"failed to save psk\"}");
+    }
+    return;
+  }
+
+  if (usb_doc.containsKey("cmd")) {
+    String cmd = usb_doc["cmd"].as<String>();
+    if (cmd == "get_uid") {
+      Serial.println("{\"uid\":\"" + get_uid() + "\"}");
+    } else if (cmd == "get_fw") {
+      Serial.println("{\"version\":\"" + String(FW_VERSION) + "\",\"model\":\"" + String(FW_MODEL) + "\"}");
+    } else {
+      Serial.println("{\"status\":\"error\",\"msg\":\"unknown command\"}");
+    }
+    return;
+  }
+
+  Serial.println("{\"status\":\"error\",\"msg\":\"unknown command\"}");
+}
+
+void core_parse_usb_data() {
+  while (Serial.available()) {
+    char c = (char)Serial.read();
+    if (c == '\n' || c == '\r') {
+      String line = usb_serial_buffer;
+      usb_serial_buffer = "";
+      line.trim();
+      if (line.length() > 0) {
+        core_process_usb_command(line);
+      }
+    } else {
+      if (usb_serial_buffer.length() < 256) {
+        usb_serial_buffer += c;
+      }
+    }
+  }
+}
+
 uint32_t keepaliveTimeout = 0;
 uint32_t logTimeout = 0;
 void core_loop(){
@@ -309,6 +387,8 @@ void core_loop(){
   }
 
   core_parse_mqtt_messages();
+
+  core_parse_usb_data();
 
   #ifdef ENABLE_JS
     JS.loop();

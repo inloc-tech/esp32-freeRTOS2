@@ -1,6 +1,7 @@
 
 #define SYS_PATH_SETTINGS "/etc/settings"
 #define FW_SETTINGS_FILENAME "/etc/settings/fw.txt"
+#define FW_PSK_FILENAME "/etc/settings/psk.txt"
 #define FW_AR_FILENAME "/etc/settings/ar.txt"
 #define FW_ALARM_FILENAME "/etc/settings/alarm.txt"
 #define FW_JS_FILENAME "/etc/settings/js.txt"
