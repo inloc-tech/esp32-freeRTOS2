@@ -30,7 +30,7 @@ bool mqttSend(uint8_t clientID, String topic, String data, uint8_t qos, bool ret
 */
 void APP::init(){
 
-  LOG_INFO("Init app" + String(FW_MODEL) +" module\n");
+  LOG_INFO("Init app %s module\n", FW_MODEL);
 
   load_settings();
   log_settings();
