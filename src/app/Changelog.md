@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.1 - Released
+	fix: keepalive_period msg for sniffer
+	perf: use level for logs
+
 ## v1.1.0 - Released
 	fix: recover uid, splits firmware data, fixes nMessages and logs_level, adds variant and model
 	perf: remove fUpdateVersion logic
