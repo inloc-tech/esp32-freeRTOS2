@@ -358,7 +358,8 @@ void Core::parse_mqtt_messages(){
   if(msg == NULL)
     return;
 
-  LOG_INFO("<< [%d] %s\n", msg->clientID, msg->topic);
+  LOG_DEBUG("<< [%d] topic: %s\n", msg->clientID, msg->topic);
+  LOG_VERBOSE("<< [%d] payload: %s\n", msg->clientID, payload.c_str());
 
   bool set = false;
   bool get = false;
@@ -1186,12 +1187,9 @@ void Core::parse_mqtt_messages(){
 
 bool core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
 
-  #ifdef DEBUG_MQTT_TOPIC
-  LOG_INFO(">> [%d] %s\n", clientID, topic.c_str());
-  #endif
-  #ifdef DEBUG_MQTT_PAYLOAD
-    LOG_DEBUG("[data]: %s\n", data.c_str());
-  #endif
+  LOG_DEBUG(">> [%d] topic: %s\n", clientID, topic.c_str());
+  LOG_VERBOSE(">> [%d] payload: %s\n", clientID, data.c_str());
+  
   return call.mqtt_send(clientID,topic,data,qos,retain);
 }
 
