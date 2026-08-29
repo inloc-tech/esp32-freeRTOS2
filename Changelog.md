@@ -11,6 +11,14 @@ After being tested with some devices, version can be changed to stable a version
 ## TODO
  - Implement MQTTS
 
+### 1.1.17-1.0.0
+	fix: overwrite model and variant if it changes
+	perf: enable mqtt logs
+	fix: mqtt log for payload, add some extra logs
+	fix!!: unwrapped double-encoded payload mqtt
+
+	// !! PUSH changes with zimbora/freeRTOS2 project
+
 ### 1.1.16-1.0.0
 	fix(esp32-freeRTOS): clientID syntax
 	ci(credentials): set FW_VARIANT default as esp32c5
