@@ -209,9 +209,18 @@ void Core::load_settings(){
       memcpy(settings.fw.version,FW_VERSION,sizeof(FW_VERSION));
       call.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings));
       if( memcmp(settings.fw_build.model,FW_MODEL,sizeof(FW_MODEL)) != 0 ){
+        memset(settings.fw_build.model,0,sizeof(settings.fw_build.model));
+        memcpy(settings.fw_build.model,FW_MODEL,sizeof(FW_MODEL));
         LOG_INFO("fw model changed, raise flag..\n");
         modelChanged = true;
       }
+      if( memcmp(settings.fw_build.variant,FW_VARIANT,sizeof(FW_VARIANT)) != 0 ){
+        memset(settings.fw_build.variant,0,sizeof(settings.fw_build.variant));
+        memcpy(settings.fw_build.variant,FW_VARIANT,sizeof(FW_VARIANT));
+        LOG_INFO("fw variant changed, raise flag..\n");
+        variantChanged = true;
+      }
+
     }
     else{
       LOG_INFO("resetting settings..\n");
