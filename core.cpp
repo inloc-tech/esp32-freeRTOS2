@@ -359,7 +359,7 @@ void Core::parse_mqtt_messages(){
     return;
 
   LOG_DEBUG("<< [%d] topic: %s\n", msg->clientID, msg->topic);
-  LOG_VERBOSE("<< [%d] payload: %s\n", msg->clientID, payload.c_str());
+  LOG_VERBOSE("<< [%d] payload: %s\n", msg->clientID, msg->data);
 
   bool set = false;
   bool get = false;
@@ -773,6 +773,9 @@ void Core::parse_mqtt_messages(){
 
           break;
         }
+      default:
+        LOG_WARN("unhandled topic: %s\n", topic.c_str());
+        break;
     }
 
     // store settings
