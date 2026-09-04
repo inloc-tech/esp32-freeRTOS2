@@ -3,9 +3,9 @@
 home_dir="$HOME"
 build="dev"
 board="esp32"
-variant="esp32-wroom-32d"
-project="esp32-freeRTOS2"
-app="demo"
+sketch="esp32-freeRTOS2"
+project="freeRTOS2"
+app="sniffer-gw"
 fw_version="1.0.0"
 app_version="1.0.0"
 
@@ -104,16 +104,19 @@ done
 home_dir="${home_dir/#\~/$HOME}"
 
 case "$board" in
-  esp32|esp32c5|esp32c5n4|esp32c5n8r8)
+  esp32|esp32c5|esp32c5n4)
     ;;
   *)
     echo "Unsupported board: $board"
-    echo "Available boards: esp32, esp32c5, esp32c5n4, esp32c5n8r8"
+    echo "Available boards: esp32, esp32c5, esp32c5n4"
     exit 1
     ;;
 esac
 
-board_fqbn="esp32:esp32:${board}"
+# Set FW_MODEL from selected app name for this build.
+escaped_app=$(printf '%s' "$app" | sed 's/[&/]/\\&/g')
+sed -i.bak "s|#define FW_MODEL[[:space:]]\+\"[^\"]*\"|#define FW_MODEL                \"${escaped_app}\"|" "$FILEAPP"
+echo "FW_MODEL set to: ${app}"
 
 # Modify MQTT_HOST_1 based on build type
 echo "Build type: ${build}"
@@ -121,12 +124,18 @@ CREDENTIALS_FILE="./src/app/user/credentials.h"
 
 if [ "$board" == "esp32" ]; then
   variant="esp32-wroom-32d"
+  board_fqbn="esp32:esp32:esp32"
 elif [ "$board" == "esp32c5" ]; then
   variant="esp32c5"
+  board_fqbn="esp32:esp32:esp32c5:CDCOnBoot=default"
+  cdc_build_flag="--build-property build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=0"
 elif [ "$board" == "esp32c5n4" ]; then
   variant="esp32c5n4"
+  board_fqbn="esp32:esp32:esp32c5:PSRAM=disabled"
 elif [ "$board" == "esp32c5n8r8" ]; then
   variant="esp32c5n8r8"
+  board_fqbn="esp32:esp32:esp32c5:PSRAM=enabled"
+  # increase flash memory
 else
   # add more boards here if needed
   # increase logic for FW_VARIANT definition based on board type
@@ -159,6 +168,18 @@ elif [ "$build" == "prod" ]; then
     echo "LOG_LEVEL set to 2"
 else
     echo "Using default MQTT_HOST_1 for dev environment"
+fi
+
+if [[ "$board" == "esp32c5" || "$board" == "esp32c5n4" ]]; then
+    sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc-5G"/' "$CREDENTIALS_FILE"
+    sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
+    echo "WIFI_SSID set to Inloc-5G"
+    echo "WIFI_PASSWORD set to inlocAPpwd"
+else
+    sed -i.bak 's/#define WIFI_SSID "[^"]*"/#define WIFI_SSID "Inloc"/' "$CREDENTIALS_FILE"
+    sed -i.bak 's/#define WIFI_PASSWORD "[^"]*"/#define WIFI_PASSWORD "inlocAPpwd"/' "$CREDENTIALS_FILE"
+    echo "WIFI_SSID set to Inloc"
+    echo "WIFI_PASSWORD set to inlocAPpwd"
 fi
 
 # Check if arduino-cli is installed
@@ -298,10 +319,8 @@ if [ "$docker" == "true" ]; then
 fi
 
 echo "Installation complete!"
-sketch="esp32-freeRTOS2"
 echo "project: ${project}"
-echo "sketch: ${sketch}"
-echo "app: ${app}"
+echo "model: ${app}"
 
 arduino-cli cache clean
 

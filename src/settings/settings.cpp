@@ -65,7 +65,9 @@ user_settings settings = {
 
 bool settings_set_param(String param, String value){
 
-    switch(resolveOptionSettings(settingsTopics,param)){
+    settingsTopics_ topic = resolveOptionSettings(settingsTopics,param);
+
+    switch(topic){
       case wifi_mode:
         if(value.length() <= sizeof(settings.wifi.mode)){
           memset(settings.wifi.mode,0,sizeof(settings.wifi.mode));
@@ -198,8 +200,13 @@ bool settings_set_param(String param, String value){
           }
         }
         break;
+
+      case setting_not_found:
+        LOG_WARN("param rejected: %s = %s\n", param.c_str(), value.c_str());
+        break;
     }
 
+    LOG_ERROR("value rejected: %s = %s\n", param.c_str(), value.c_str());
     return false;
 }
 

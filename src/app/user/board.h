@@ -12,7 +12,7 @@
 //  - esp32      -> BOARD_ESP32_WROOM_32D
 //  - esp32c5    -> BOARD_ESP32C5_WIFI6_KIT_N16R8
 #if defined(CONFIG_IDF_TARGET_ESP32C5)
-  #define BOARD_ESP32C5_WIFI6_KIT_N16R8
+  #define BOARD_ESP32C5
 #elif defined(CONFIG_IDF_TARGET_ESP32)
   #define BOARD_ESP32_WROOM_32D
 #endif
@@ -34,15 +34,18 @@
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
 
-#ifdef BOARD_ESP32C5_WIFI6_KIT_N16R8
+#ifdef BOARD_ESP32C5
 
   // Modem power key (adjust if modem is connected)
   #define PWKEY 8
 
   // Serial1 - external UART (exposed on J3 header)
+  // NOTE: GPIO4 and GPIO5 are LP_UART dedicated pins (LP_U0RXD/LP_U0TXD).
+  // They are in the LP IO domain (GPIO0-GPIO6). The IDF claims them for LP UART
+  // at boot, overriding the HP GPIO matrix — Serial1 TX produces no output on GPIO5.
+  // Use HP-only GPIO (>= GPIO7) instead: GPIO23/GPIO24 are free on J3.
   #define SERIAL1_GPIO_RX  23
   #define SERIAL1_GPIO_TX  24
-  #define SERIAL1_GPIO_RTS 28
 
   // RGB LED
   #define LED_PIN 27

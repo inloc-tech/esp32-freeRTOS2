@@ -11,6 +11,14 @@ After being tested with some devices, version can be changed to stable a version
 ## TODO
  - Implement MQTTS
 
+### 1.1.17-1.0.0
+	fix: overwrite model and variant if it changes
+	perf: enable mqtt logs
+	fix: mqtt log for payload, add some extra logs
+	fix!!: unwrapped double-encoded payload mqtt
+
+	// !! PUSH changes with zimbora/freeRTOS2 project
+
 ### 1.1.16-1.0.0
 	fix(esp32-freeRTOS): clientID syntax
 	ci(credentials): set FW_VARIANT default as esp32c5
@@ -24,6 +32,7 @@ After being tested with some devices, version can be changed to stable a version
 	feat: mqtt send variant
 
 ### 1.1.14-1.0.0
+	fix: serial 1 for esp32c5
 	perf: improve Wi-Fi startup and connectivity flow
 		- optimize `mRTOS_task` reconnect logic with timed waits on stored credentials, fallback to default credentials, and a final retry after AP provisioning
 		- improve AP provisioning portal layout and document the current Wi-Fi connection logic
@@ -35,8 +44,16 @@ After being tested with some devices, version can be changed to stable a version
 		- update modem-freeRTOS dependency to v1.0.11
 	doc: app package
 		- expand `app_package.h` inline guidance and metadata notes
+	feat: build conditions
+		- support special build for esp32c5n4
+		- set FW_MODEL with var APP value
+	fix(flash): get mac from BASE MAC
+	feat: add preprocessor variant
+	feat: send variant through MQTT
+	ci: replaces esp32c5 by esp32c5n4 board, renames project
 
 ### 1.1.13
+Bugs: serial1 is not working.. !! esp32c5
 feat: compile dev/staging/prod images on release creation (#14)
 * feat: compile dev/staging/prod images on release publication
 	- Add a `set-matrix` pre-job that dynamically outputs which build
@@ -75,7 +92,10 @@ feat: compile dev/staging/prod images on release creation (#14)
 
 ### 1.1.11
 	fix: build macos
+	feat: supports arp requests
 	feat: adds fw_wifi_get_
+	Uses modem-freeRTOS@1.0.10
+	
 
 ### 1.1.10
 	Add stage release and improve prod release with environment-specific MQTT configuration (#8)

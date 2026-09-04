@@ -9,7 +9,7 @@ project="esp32-freeRTOS2-c5"
 # Sketch name (must match .ino filename)
 sketch="esp32-freeRTOS2"
 # dir name
-app="demo"
+app="sniffer-gw"
 # folder to store generated images
 folder="images"
 

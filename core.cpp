@@ -12,6 +12,10 @@ MODEMfreeRTOS mRTOS; // freeRTOS modem
 MQTT_MSG_RX* msg; // mqtt
 extern DynamicJsonDocument doc; // json
 
+// ARP table: IP string -> { mac, hostname }
+struct ArpEntry { String mac; String hostname; };
+std::map<String, ArpEntry> arp_table;
+
 #ifdef ENABLE_AP
   void CALLBACKS_WIFI_AP::onWiFiSet(String ssid, String pass){
     settings_set_param("wifi_ssid",ssid);
@@ -205,9 +209,18 @@ void Core::load_settings(){
       memcpy(settings.fw.version,FW_VERSION,sizeof(FW_VERSION));
       call.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings));
       if( memcmp(settings.fw_build.model,FW_MODEL,sizeof(FW_MODEL)) != 0 ){
+        memset(settings.fw_build.model,0,sizeof(settings.fw_build.model));
+        memcpy(settings.fw_build.model,FW_MODEL,sizeof(FW_MODEL));
         LOG_INFO("fw model changed, raise flag..\n");
         modelChanged = true;
       }
+      if( memcmp(settings.fw_build.variant,FW_VARIANT,sizeof(FW_VARIANT)) != 0 ){
+        memset(settings.fw_build.variant,0,sizeof(settings.fw_build.variant));
+        memcpy(settings.fw_build.variant,FW_VARIANT,sizeof(FW_VARIANT));
+        LOG_INFO("fw variant changed, raise flag..\n");
+        variantChanged = true;
+      }
+
     }
     else{
       LOG_INFO("resetting settings..\n");
@@ -345,7 +358,8 @@ void Core::parse_mqtt_messages(){
   if(msg == NULL)
     return;
 
-  LOG_INFO("<< [%d] %s\n", msg->clientID, msg->topic);
+  LOG_DEBUG("<< [%d] topic: %s\n", msg->clientID, msg->topic);
+  LOG_VERBOSE("<< [%d] payload: %s\n", msg->clientID, msg->data);
 
   bool set = false;
   bool get = false;
@@ -357,6 +371,18 @@ void Core::parse_mqtt_messages(){
   String topic_set = "";
   topic.replace("\"","");
   String payload = String(msg->data);
+
+  // Some MQTT backends (e.g. modem/AT-based publishers) deliver the payload
+  // double JSON-encoded, wrapped as a quoted string with escaped inner quotes
+  // (e.g. "{\"period\":360}" instead of {"period":360}). deserializeJson()
+  // would otherwise happily parse that as a plain JSON string (no error),
+  // and doc.containsKey(...) would silently be false, so the message looks
+  // unprocessed with no warning at all. Unwrap it here, same as topic above.
+  if(payload.length() >= 2 && payload.startsWith("\"") && payload.endsWith("\"")){
+    payload = payload.substring(1, payload.length() - 1);
+    payload.replace("\\\"", "\"");
+    LOG_DEBUG("unwrapped double-encoded payload: %s\n", payload.c_str());
+  }
 
   String uid = MQTT_UID_PREFIX+mRTOS.macAddress();
   index = topic.indexOf(uid);
@@ -759,6 +785,9 @@ void Core::parse_mqtt_messages(){
 
           break;
         }
+      default:
+        LOG_WARN("unhandled topic: %s\n", topic.c_str());
+        break;
     }
 
     // store settings
@@ -982,6 +1011,166 @@ void Core::parse_mqtt_messages(){
         }
         break;
 #endif
+      case fw_wifi_arp_scan_get_:
+        {
+          // Optional single-IP scan: payload {"ip":"x.x.x.x"}
+          StaticJsonDocument<64> ipDoc;
+          DeserializationError jerr = deserializeJson(ipDoc, payload);
+          if (!jerr && ipDoc.containsKey("ip")) {
+            String ipStr = ipDoc["ip"].as<String>();
+            IPAddress targetIP;
+            if (targetIP.fromString(ipStr)) {
+              ARP_HOST result;
+              LOG_DEBUG("ARP scanning single IP: %s\n", ipStr.c_str());
+              if (mRTOS.arp_scan_ip(targetIP, &result, ARP_TIMEOUT_MS)) {
+                char macStr[18];
+                snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                  result.mac[0], result.mac[1], result.mac[2],
+                  result.mac[3], result.mac[4], result.mac[5]);
+                arp_table[ipStr] = { String(macStr), arp_table.count(ipStr) ? arp_table[ipStr].hostname : "" };
+              }
+              // Send only this entry
+              auto it = arp_table.find(ipStr);
+              String out = "{\"d\":[";
+              if (it != arp_table.end())
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              out += "]}";
+              core_send_mqtt_message(clientID, topic_get, out, 2, false);
+            }
+          } else {
+            // Full subnet scan
+            ARP_HOST* results = (ARP_HOST*)malloc(ARP_SCAN_MAX_HOSTS * sizeof(ARP_HOST));
+            if (results == nullptr) break;
+            LOG_DEBUG("ARP scanning subnet..\n");
+            uint16_t found = mRTOS.arp_scan(results, ARP_SCAN_MAX_HOSTS, ARP_TIMEOUT_MS);
+            for (uint16_t i = 0; i < found; i++) {
+              char macStr[18];
+              snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                results[i].mac[0], results[i].mac[1], results[i].mac[2],
+                results[i].mac[3], results[i].mac[4], results[i].mac[5]);
+              String ip = results[i].ip.toString();
+              arp_table[ip] = { String(macStr), arp_table.count(ip) ? arp_table[ip].hostname : "" };
+            }
+            free(results);
+            LOG_DEBUG("ARP scan found %d hosts\n", found);
+
+            // Send full table in chunks of 5
+            const uint8_t CHUNK = 5;
+            uint16_t total = arp_table.size();
+            uint16_t totalChunks = total > 0 ? (total + CHUNK - 1) / CHUNK : 1;
+            uint16_t chunkIdx = 0;
+            auto it = arp_table.begin();
+            while (it != arp_table.end()) {
+              String out;
+              out.reserve(300);
+              out = "{\"c\":" + String(chunkIdx) +
+                           ",\"t\":" + String(totalChunks) +
+                           ",\"d\":[";
+              for (uint8_t c = 0; c < CHUNK && it != arp_table.end(); c++, ++it) {
+                if (c > 0) out += ",";
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              }
+              out += "]}";
+              if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
+                LOG_WARN("[arp_scan] chunk %d send FAILED\n", chunkIdx);
+              chunkIdx++;
+            }
+          }
+        }
+        break;
+      case fw_wifi_arpR_scan_get_:
+        {
+          // Optional single-IP scan: payload {"ip":"x.x.x.x"}
+          StaticJsonDocument<64> ipDoc;
+          DeserializationError jerr = deserializeJson(ipDoc, payload);
+          if (!jerr && ipDoc.containsKey("ip")) {
+            String ipStr = ipDoc["ip"].as<String>();
+            IPAddress targetIP;
+            if (targetIP.fromString(ipStr)) {
+              NETWORK_HOST result;
+              LOG_DEBUG("ARP+DNS scanning single IP: %s\n", ipStr.c_str());
+              if (mRTOS.arp_scan_ip_with_name(targetIP, &result, ARP_TIMEOUT_MS, DNS_TIMEOUT_MS)) {
+                char macStr[18];
+                snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                  result.mac[0], result.mac[1], result.mac[2],
+                  result.mac[3], result.mac[4], result.mac[5]);
+                arp_table[ipStr] = { String(macStr), String(result.hostname[0] ? result.hostname : "") };
+              }
+              // Send only this entry
+              auto it = arp_table.find(ipStr);
+              String out = "{\"d\":[";
+              if (it != arp_table.end())
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              out += "]}";
+              core_send_mqtt_message(clientID, topic_get, out, 2, false);
+            }
+          } else {
+            // Full subnet scan with names
+            NETWORK_HOST* devices = (NETWORK_HOST*)malloc(ARP_SCAN_MAX_HOSTS * sizeof(NETWORK_HOST));
+            if (devices == nullptr) break;
+            uint16_t found = mRTOS.arp_scan_with_names(devices, ARP_SCAN_MAX_HOSTS, ARP_TIMEOUT_MS, DNS_TIMEOUT_MS);
+            for (uint16_t i = 0; i < found; i++) {
+              char macStr[18];
+              snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
+                devices[i].mac[0], devices[i].mac[1], devices[i].mac[2],
+                devices[i].mac[3], devices[i].mac[4], devices[i].mac[5]);
+              String ip = devices[i].ip.toString();
+              arp_table[ip] = { String(macStr), String(devices[i].hostname[0] ? devices[i].hostname : "") };
+            }
+            free(devices);
+            LOG_DEBUG("ARP+DNS scan complete\n");
+
+            // Send full table in chunks of 3
+            const uint8_t CHUNK = 3;
+            uint16_t total = arp_table.size();
+            uint16_t totalChunks = total > 0 ? (total + CHUNK - 1) / CHUNK : 1;
+            uint16_t chunkIdx = 0;
+            auto it = arp_table.begin();
+            while (it != arp_table.end()) {
+              String out;
+              out.reserve(300);
+              out = "{\"c\":" + String(chunkIdx) +
+                           ",\"t\":" + String(totalChunks) +
+                           ",\"d\":[";
+              for (uint8_t c = 0; c < CHUNK && it != arp_table.end(); c++, ++it) {
+                if (c > 0) out += ",";
+                out += "[\"" + it->first + "\",\"" + it->second.mac + "\",\"" + it->second.hostname + "\"]";
+              }
+              out += "]}";
+              if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
+                LOG_WARN("[arpR_scan] chunk %d send FAILED\n", chunkIdx);
+              chunkIdx++;
+            }
+          }
+        }
+        break;
+      case fw_wifi_arp_table_get_:
+        {
+          // Send current ARP table in chunks of 3
+          const uint8_t CHUNK = 3;
+          uint16_t total = arp_table.size();
+          uint16_t totalChunks = total > 0 ? (total + CHUNK - 1) / CHUNK : 1;
+          uint16_t chunkIdx = 0;
+          auto it = arp_table.begin();
+          while (it != arp_table.end()) {
+            String out;
+            out.reserve(300);
+            out = "{\"c\":" + String(chunkIdx) +
+                         ",\"t\":" + String(totalChunks) +
+                         ",\"d\":[";
+            for (uint8_t c = 0; c < CHUNK && it != arp_table.end(); c++, ++it) {
+              if (c > 0) out += ",";
+              out += "[\"" + it->first +
+                     "\",\"" + it->second.mac +
+                     "\",\"" + it->second.hostname + "\"]";
+            }
+            out += "]}";
+            if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
+              LOG_WARN("[arp_table] chunk %d send FAILED\n", chunkIdx);
+            chunkIdx++;
+          }
+        }
+        break;
       case fw_wifi_get_:
         {
           String ssid    = WiFi.SSID();
@@ -1013,12 +1202,9 @@ void Core::parse_mqtt_messages(){
 
 bool core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
 
-  #ifdef DEBUG_MQTT_TOPIC
-  LOG_INFO(">> [%d] %s\n", clientID, topic.c_str());
-  #endif
-  #ifdef DEBUG_MQTT_PAYLOAD
-    LOG_DEBUG("[data]: %s\n", data.c_str());
-  #endif
+  LOG_DEBUG(">> [%d] topic: %s\n", clientID, topic.c_str());
+  LOG_VERBOSE(">> [%d] payload: %s\n", clientID, data.c_str());
+  
   return call.mqtt_send(clientID,topic,data,qos,retain);
 }
 
