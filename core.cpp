@@ -6,6 +6,7 @@ CALLS call;
 SYSFILE sysfile;
 extern SENSORS sensors;
 APP app;
+Core core;
 
 MODEMfreeRTOS mRTOS; // freeRTOS modem
 MQTT_MSG_RX* msg; // mqtt
@@ -22,10 +23,10 @@ std::map<String, ArpEntry> arp_table;
 
     settings_log();
     if(sysfile.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings))){
-      Serial.println("Client Disconnected.");
+      LOG_INFO("Client Disconnected.\n");
       call.fw_reboot();
     }else{
-      Serial.println("failing writing file: "+String(FW_SETTINGS_FILENAME));
+      LOG_ERROR("failing writing file: %s\n", FW_SETTINGS_FILENAME);
     }
   }
 #endif
@@ -127,7 +128,7 @@ std::map<String, ArpEntry> arp_table;
     if(settings_set_param(param,value)){
       settings_log();
       if(!sysfile.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings)))
-        Serial.println("failing writing file: "+String(FW_SETTINGS_FILENAME));
+        LOG_ERROR("failing writing file: %s\n", FW_SETTINGS_FILENAME);
     }
   }
 #endif
@@ -139,41 +140,41 @@ String directory[] = {
 };
 
 void CALLBACKS_SENSORS::onReadSensor(String ref, String value){
-  Serial.println("onReadSensor callback called");
+  LOG_DEBUG("onReadSensor callback called\n");
   #ifdef ENABLE_JS
   String code = "event.onReadSensor(\""+ref+"\","+value+")";
   const char* res = JS.call(code.c_str());     // Execute JS code
-  Serial.println(res);
+  LOG_DEBUG("%s\n", res);
   #else
   call.mqtt_send("/"+ref,value,2,0);
   #endif
 };
 
 void CALLBACKS_SENSORS::onAlarmSensor(String ref, String value){
-  Serial.println("onAlarmSensor callback called");
+  LOG_DEBUG("onAlarmSensor callback called\n");
   #ifdef ENABLE_JS
   String code = "event.onAlarmSensor(\""+ref+"\","+value+")";
   const char* res = JS.call(code.c_str());     // Execute JS code
-  Serial.println(res);
+  LOG_DEBUG("%s\n", res);
   #endif
 };
 
 void CALLBACKS_SENSORS::onAlarmTrigger(String ref, String value){
-  Serial.println("onAlarmTrigger callback called");
+  LOG_DEBUG("onAlarmTrigger callback called\n");
   #ifdef ENABLE_JS
   String code = "event.onAlarmTrigger(\""+ref+"\","+value+")";
   const char* res = JS.call(code.c_str());     // Execute JS code
-  Serial.println(res);
+  LOG_DEBUG("%s\n", res);
   #else
   call.mqtt_send("/"+ref,value,2,0);
   #endif
 };
 
 void CALLBACKS_SENSORS::onRS485ReadAll(String data_json){
-  Serial.println("onRS485ReadAll callback called");
-  Serial.println("core: "+data_json);
+  LOG_DEBUG("onRS485ReadAll callback called\n");
+  LOG_DEBUG("core: %s\n", data_json.c_str());
   String filename = ".txt";
-  core_store_record(filename,data_json.c_str(),data_json.length());
+  core.store_record(filename,data_json.c_str(),data_json.length());
 };
 
 
@@ -186,29 +187,51 @@ bool CALLBACKS_SENSORS::getAppValue(JsonObject& obj, String ref){
 /*
 * load settings
 */
-void core_load_settings(){
+void Core::load_settings(){
 
   uint16_t len = sizeof(settings);
   char* data = (char*)malloc(len);
   if(data != nullptr){
+    memset(data,0,len);
     call.read_file(FW_SETTINGS_FILENAME,data,&len);
     memcpy(settings.fw.version,data,sizeof(settings.fw.version));
+    LOG_INFO("current fw version: %s\n", FW_VERSION);
+    LOG_INFO("previous fw version: %s\n", settings.fw.version);
+    if(memcmp(FW_VERSION,settings.fw.version,sizeof(FW_VERSION)) != 0){
+      LOG_INFO("fw version changed, raise flag..\n");
+      versionChanged = true;
+    }
+    
     String version = String(settings.fw.version);
-    Serial.println("current fw version: "+String(FW_VERSION));
-    Serial.println("previous fw version: "+version);
     if( ((version.startsWith("0.") || version.startsWith("1.") || version.startsWith("2."))) ){
       memcpy(settings.fw.version,data,sizeof(settings));
       memset(settings.fw.version,0,sizeof(settings.fw.version));
       memcpy(settings.fw.version,FW_VERSION,sizeof(FW_VERSION));
       call.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings));
+      if( memcmp(settings.fw_build.model,FW_MODEL,sizeof(FW_MODEL)) != 0 ){
+        memset(settings.fw_build.model,0,sizeof(settings.fw_build.model));
+        memcpy(settings.fw_build.model,FW_MODEL,sizeof(FW_MODEL));
+        LOG_INFO("fw model changed, raise flag..\n");
+        modelChanged = true;
+      }
+      if( memcmp(settings.fw_build.variant,FW_VARIANT,sizeof(FW_VARIANT)) != 0 ){
+        memset(settings.fw_build.variant,0,sizeof(settings.fw_build.variant));
+        memcpy(settings.fw_build.variant,FW_VARIANT,sizeof(FW_VARIANT));
+        LOG_INFO("fw variant changed, raise flag..\n");
+        variantChanged = true;
+      }
+
     }
     else{
-      Serial.println("resetting settings..");
+      LOG_INFO("resetting settings..\n");
       call.fw_reset();
       call.init_filesystem(directory,NUMITEMS(directory));
 
       memset(settings.fw.version,0,sizeof(settings.fw.version));
       memcpy(settings.fw.version,FW_VERSION,sizeof(FW_VERSION));
+      versionChanged = true;
+      modelChanged = true;
+      variantChanged = true;
       // modem
   #ifdef ENABLE_LTE
       memcpy(settings.modem.apn,SETTINGS_MODEM_APN,sizeof(settings.modem.apn));
@@ -225,7 +248,7 @@ void core_load_settings(){
   }
 }
 
-void core_init(){
+void Core::init(){
   
   
   sensors.init();
@@ -239,7 +262,7 @@ void core_init(){
     call.read_file(FW_AR_FILENAME,data,&len);
     String file = String(data);
     if(!sensors.init_ar(data)){
-      Serial.println("Autorequests not running !!");
+      LOG_WARN("Autorequests not running !!\n");
     }
 
     len = 2048;
@@ -248,7 +271,7 @@ void core_init(){
     call.read_file(FW_ALARM_FILENAME,data,&len);
     file = String(data);
     if(!sensors.init_alarm(data)){
-      Serial.println("Alarms not running !!");
+      LOG_WARN("Alarms not running !!\n");
     }
     free(data);
   }
@@ -262,15 +285,15 @@ void core_init(){
       if(call.read_file(FW_JS_FILENAME,code,&len)){
         if(len != 0){
           const char* res = JS.exec((const char*)code);
-          Serial.printf("%s\n", res);
-        }else Serial.println("no JS script is empty..");
-      }else Serial.println("no JS script found..");
+          LOG_DEBUG("%s\n", res);
+        }else LOG_WARN("no JS script is empty..\n");
+      }else LOG_WARN("no JS script found..\n");
     }
     free(code);
     /*
     const char* code = "let e = {onSensorRead: function(name,value){log(name); if(value === 1) mqtt.send(\"/sensor/\"+name,value,0); return true;}}; let timer_id = timer.create(2000,'sensor.read(\"asd\")');";
     const char* res = JS.exec(code);
-    Serial.printf("%s\n", res);
+    LOG_DEBUG("%s\n", res);
     */
   #endif
 
@@ -281,7 +304,7 @@ void core_init(){
 
 uint32_t keepaliveTimeout = 0;
 uint32_t logTimeout = 0;
-void core_loop(){
+void Core::loop(){
 
   if(settings.keepalive.active && keepaliveTimeout < millis()){
 
@@ -297,24 +320,22 @@ void core_loop(){
     keepaliveTimeout = millis()+(settings.keepalive.period*1000);
 
     sensors.loop();
-    core_check_records();
+    check_records();
     String directory = APP_PATH_RECORDS;
     call.clean_dir(directory);
   }
 
   if(settings.log.active && logTimeout < millis()){
-    if(settings.log.level >= LOG_INFO){
-      String heapFree = String(ESP.getFreeHeap() / 1024);
-      Serial.println("\n\n----- Info -----\n");
-      Serial.println("heap free: " + heapFree + " KiB");
-      Serial.println(date());
-      mRTOS.log_modem_status();
-      Serial.println("--- ----- --- \n\n");
-    }
+    String heapFree = String(ESP.getFreeHeap() / 1024);
+    LOG_INFO("\n\n----- Info -----\n\n");
+    LOG_INFO("heap free: %s KiB\n", heapFree.c_str());
+    LOG_INFO("%s\n", date().c_str());
+    mRTOS.log_modem_status();
+    LOG_INFO("--- ----- --- \n\n");
     logTimeout = millis()+5000;
   }
 
-  core_parse_mqtt_messages();
+  core.parse_mqtt_messages();
 
   #ifdef ENABLE_JS
     JS.loop();
@@ -328,7 +349,7 @@ void core_loop(){
 /*
 * Do not edit it
 */
-void core_parse_mqtt_messages(){
+void Core::parse_mqtt_messages(){
   msg = mRTOS.mqtt_getNextMessage(msg);
 
   int16_t index = -1;
@@ -337,7 +358,8 @@ void core_parse_mqtt_messages(){
   if(msg == NULL)
     return;
 
-  Serial.println("<< ["+String(msg->clientID)+"] "+String(msg->topic));
+  LOG_DEBUG("<< [%d] topic: %s\n", msg->clientID, msg->topic);
+  LOG_VERBOSE("<< [%d] payload: %s\n", msg->clientID, msg->data);
 
   bool set = false;
   bool get = false;
@@ -350,13 +372,25 @@ void core_parse_mqtt_messages(){
   topic.replace("\"","");
   String payload = String(msg->data);
 
+  // Some MQTT backends (e.g. modem/AT-based publishers) deliver the payload
+  // double JSON-encoded, wrapped as a quoted string with escaped inner quotes
+  // (e.g. "{\"period\":360}" instead of {"period":360}). deserializeJson()
+  // would otherwise happily parse that as a plain JSON string (no error),
+  // and doc.containsKey(...) would silently be false, so the message looks
+  // unprocessed with no warning at all. Unwrap it here, same as topic above.
+  if(payload.length() >= 2 && payload.startsWith("\"") && payload.endsWith("\"")){
+    payload = payload.substring(1, payload.length() - 1);
+    payload.replace("\\\"", "\"");
+    LOG_DEBUG("unwrapped double-encoded payload: %s\n", payload.c_str());
+  }
+
   String uid = MQTT_UID_PREFIX+mRTOS.macAddress();
   index = topic.indexOf(uid);
   if(index > -1)
     topic = topic.substring(index+uid.length());
 
   if(topic == "/status"){
-      Serial.println("update clock..");
+      LOG_INFO("update clock..\n");
       mRTOS.update_clock_sys();
   }else if(topic.startsWith("/settings")){
     if(topic.endsWith("/set")){
@@ -373,20 +407,18 @@ void core_parse_mqtt_messages(){
       topic_get = topic.substring(0,index); // get filtered
     }
 
-
-    //Serial.println("topic: "+topic);
     switch(resolveOption(fwTopics,topic)){
       case settings_update_:
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
 
           if(doc.containsKey("url")){
             String url = doc["url"];
-            Serial.println("updating fw from "+url);
+            LOG_INFO("updating fw from %s\n", url.c_str());
             call.fw_settings_update(url,FW_SETTINGS_FILENAME);
           }
 
@@ -404,7 +436,7 @@ void core_parse_mqtt_messages(){
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
           store = true;
@@ -459,7 +491,7 @@ void core_parse_mqtt_messages(){
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
           store = true;
@@ -543,11 +575,11 @@ void core_parse_mqtt_messages(){
         break;
       case settings_mqtt_:
         {
-          Serial.println("updating mqtt");
+          LOG_INFO("updating mqtt\n");
 
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
 
@@ -632,7 +664,7 @@ void core_parse_mqtt_messages(){
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
           store = true;
@@ -670,7 +702,7 @@ void core_parse_mqtt_messages(){
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
 
@@ -753,13 +785,16 @@ void core_parse_mqtt_messages(){
 
           break;
         }
+      default:
+        LOG_WARN("unhandled topic: %s\n", topic.c_str());
+        break;
     }
 
     // store settings
     if(store){
       settings_log();
       if(!call.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings)))
-        Serial.println("failing writing file: "+String(FW_SETTINGS_FILENAME));
+        LOG_ERROR("failing writing file: %s\n", FW_SETTINGS_FILENAME);
     }
 
     if(set)
@@ -781,11 +816,10 @@ void core_parse_mqtt_messages(){
       topic_get = topic.substring(0,index); // get filtered
     }
 
-    //Serial.println("topic: "+topic);
     switch(resolveOption(fwTopics,topic)){
       case fw_get_:
         {
-          Serial.println("getting fw info..");
+          LOG_INFO("getting fw info..\n");
           //core_send_mqtt_message(clientID,/version,String(FW_VERSION),0,true);
 
           String sHeapFree = String(ESP.getFreeHeap() / 1024);
@@ -800,7 +834,7 @@ void core_parse_mqtt_messages(){
 
         if(payload != "1") return;
 
-        Serial.println("reboot..");
+        LOG_INFO("reboot..\n");
         // !! unpublish topic
         //mqtt_pushMessage(clientID,topic+"/set","",1,true);
         //flag_restart = true;
@@ -811,7 +845,7 @@ void core_parse_mqtt_messages(){
         if(payload != "1")
           return;
 
-        Serial.println("reset..");
+        LOG_INFO("reset..\n");
         // !! unpublish topic
         //mqtt_pushMessage(clientID,topic+"/set","",1,true);
         call.fw_reset();
@@ -826,7 +860,7 @@ void core_parse_mqtt_messages(){
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            Serial.println("Not Json");
+            LOG_WARN("Not Json\n");
             return;
           }
 
@@ -835,10 +869,10 @@ void core_parse_mqtt_messages(){
             if(doc.containsKey("token")){
               String token = doc["token"];
             }else{
-              Serial.println("fota from "+url);
+              LOG_INFO("fota from %s\n", url.c_str());
               String error = "";
               #ifndef ENABLE_LTE
-                error = core_fota(url);
+                error = fota(url);
               #else
                 error = call.fw_fota(url);
               #endif
@@ -859,7 +893,7 @@ void core_parse_mqtt_messages(){
         break;
       case fw_ar_:
         if(!call.write_file(FW_AR_FILENAME,payload.c_str(),payload.length()))
-          Serial.println("Error storing Autorequests file");
+          LOG_ERROR("Error storing Autorequests file\n");
         break;
       case fw_alarm_get_:
         {
@@ -870,7 +904,7 @@ void core_parse_mqtt_messages(){
         break;
       case fw_alarm_:
         if(!call.write_file(FW_ALARM_FILENAME,payload.c_str(),payload.length()))
-          Serial.println("Error storing Alarms file");
+          LOG_ERROR("Error storing Alarms file\n");
         break;
       case fw_js_program_get_:
         {
@@ -884,20 +918,20 @@ void core_parse_mqtt_messages(){
       case fw_js_program_:
         {
           #ifdef ENABLE_JS
-          Serial.println(payload);
+          LOG_DEBUG("%s\n", payload.c_str());
           const char* res = JS.exec(payload.c_str());
-          Serial.printf("%s\n", res);
+          LOG_DEBUG("%s\n", res);
           if(!call.write_file(FW_JS_FILENAME,payload.c_str(),payload.length()))
-            Serial.println("Error storing js script");
+            LOG_ERROR("Error storing js script\n");
           #else
-          Serial.println("JS not enabled");
+          LOG_WARN("JS not enabled\n");
           #endif
         }
         break;
 #ifdef ENABLE_RS485
       case fw_serial_read_get_:
         {
-          Serial.println("rs485 read");
+          LOG_DEBUG("rs485 read\n");
           int16_t len = 4;
           uint16_t arr[len];
 
@@ -934,7 +968,7 @@ void core_parse_mqtt_messages(){
         break;
       case fw_serial_write_get_:
         {
-          Serial.println("rs485 write");
+          LOG_DEBUG("rs485 write\n");
 
           int16_t len = 20;
           uint16_t* arr = (uint16_t*)malloc(len);
@@ -943,11 +977,11 @@ void core_parse_mqtt_messages(){
 
           sensors.parseArray(payload,arr,&len);
 
-          Serial.print("array: ");
+          LOG_DEBUG("array: ");
           for(uint8_t i=0;i<len;i++){
-            Serial.printf("%d ",arr[i]);
+            LOG_DEBUG("%d ",arr[i]);
           }
-          Serial.println("");
+          LOG_DEBUG("\n");
 
           if(len < 6)
             break; // array is too short to contain valid data
@@ -987,7 +1021,7 @@ void core_parse_mqtt_messages(){
             IPAddress targetIP;
             if (targetIP.fromString(ipStr)) {
               ARP_HOST result;
-              Serial.println("ARP scanning single IP: " + ipStr);
+              LOG_DEBUG("ARP scanning single IP: %s\n", ipStr.c_str());
               if (mRTOS.arp_scan_ip(targetIP, &result, ARP_TIMEOUT_MS)) {
                 char macStr[18];
                 snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
@@ -1007,7 +1041,7 @@ void core_parse_mqtt_messages(){
             // Full subnet scan
             ARP_HOST* results = (ARP_HOST*)malloc(ARP_SCAN_MAX_HOSTS * sizeof(ARP_HOST));
             if (results == nullptr) break;
-            Serial.println("ARP scanning subnet..");
+            LOG_DEBUG("ARP scanning subnet..\n");
             uint16_t found = mRTOS.arp_scan(results, ARP_SCAN_MAX_HOSTS, ARP_TIMEOUT_MS);
             for (uint16_t i = 0; i < found; i++) {
               char macStr[18];
@@ -1018,7 +1052,7 @@ void core_parse_mqtt_messages(){
               arp_table[ip] = { String(macStr), arp_table.count(ip) ? arp_table[ip].hostname : "" };
             }
             free(results);
-            Serial.println("ARP scan found " + String(found) + " hosts");
+            LOG_DEBUG("ARP scan found %d hosts\n", found);
 
             // Send full table in chunks of 5
             const uint8_t CHUNK = 5;
@@ -1038,7 +1072,7 @@ void core_parse_mqtt_messages(){
               }
               out += "]}";
               if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
-                Serial.println("[arp_scan] chunk " + String(chunkIdx) + " send FAILED");
+                LOG_WARN("[arp_scan] chunk %d send FAILED\n", chunkIdx);
               chunkIdx++;
             }
           }
@@ -1054,7 +1088,7 @@ void core_parse_mqtt_messages(){
             IPAddress targetIP;
             if (targetIP.fromString(ipStr)) {
               NETWORK_HOST result;
-              Serial.println("ARP+DNS scanning single IP: " + ipStr);
+              LOG_DEBUG("ARP+DNS scanning single IP: %s\n", ipStr.c_str());
               if (mRTOS.arp_scan_ip_with_name(targetIP, &result, ARP_TIMEOUT_MS, DNS_TIMEOUT_MS)) {
                 char macStr[18];
                 snprintf(macStr, sizeof(macStr), "%02x%02x%02x%02x%02x%02x",
@@ -1084,7 +1118,7 @@ void core_parse_mqtt_messages(){
               arp_table[ip] = { String(macStr), String(devices[i].hostname[0] ? devices[i].hostname : "") };
             }
             free(devices);
-            Serial.println("ARP+DNS scan complete");
+            LOG_DEBUG("ARP+DNS scan complete\n");
 
             // Send full table in chunks of 3
             const uint8_t CHUNK = 3;
@@ -1104,7 +1138,7 @@ void core_parse_mqtt_messages(){
               }
               out += "]}";
               if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
-                Serial.println("[arpR_scan] chunk " + String(chunkIdx) + " send FAILED");
+                LOG_WARN("[arpR_scan] chunk %d send FAILED\n", chunkIdx);
               chunkIdx++;
             }
           }
@@ -1132,7 +1166,7 @@ void core_parse_mqtt_messages(){
             }
             out += "]}";
             if (!core_send_mqtt_message(clientID, topic_get, out, 1, false))
-              Serial.println("[arp_table] chunk " + String(chunkIdx) + " send FAILED");
+              LOG_WARN("[arp_table] chunk %d send FAILED\n", chunkIdx);
             chunkIdx++;
           }
         }
@@ -1155,8 +1189,6 @@ void core_parse_mqtt_messages(){
         }
         break;
       default:
-        //Serial.println("topic not known by fw topics");
-        //Serial.println(payload);
         break;
     }
 
@@ -1170,16 +1202,13 @@ void core_parse_mqtt_messages(){
 
 bool core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
 
-  #ifdef DEBUG_MQTT_TOPIC
-  Serial.println(">> ["+String(clientID)+"] "+topic);
-  #endif
-  #ifdef DEBUG_MQTT_PAYLOAD
-    Serial.println("[data]: "+data);
-  #endif
+  LOG_DEBUG(">> [%d] topic: %s\n", clientID, topic.c_str());
+  LOG_VERBOSE(">> [%d] payload: %s\n", clientID, data.c_str());
+  
   return call.mqtt_send(clientID,topic,data,qos,retain);
 }
 
-bool core_store_record(String filename, const char* data, uint16_t len){
+bool Core::store_record(String filename, const char* data, uint16_t len){
   String root = APP_PATH_RECORDS;
   //String path = root + "/"+ String(millis()/1000);
   String path = root + "/"+ String(now());
@@ -1191,27 +1220,25 @@ bool core_store_record(String filename, const char* data, uint16_t len){
   return true;
 }
 
-void core_check_records(){
+void Core::check_records(){
 
   uint8_t clientID = CLIENTID;
   if(settings.mqtt.active)
     clientID = CLIENTIDEXTERNAL;
 
-  //Serial.println("check records");
   if(!mRTOS.mqtt_isConnected(clientID))
     return;
 
-  //Serial.println("check filesystem for new records");
   uint32_t timeout = millis() + 5000;
   bool (*send_ar)(String);
-  send_ar = &core_send_record;
+  send_ar = &Core::send_record;
   String path = APP_PATH_RECORDS;
   call.check_filesystem_records(path.c_str(),timeout,send_ar); // iterate through all subdirectories
 
 }
 
 // !! callback - sysfile safe
-bool core_send_record(String filename){
+bool Core::send_record(String filename){
 
   // This is a safe function
   // Inside it you can call sysfile class
@@ -1232,13 +1259,13 @@ bool core_send_record(String filename){
   path = path.substring(0,index);
   String topic = MQTT_PATH_RECORDS;
   topic += path;
-  Serial.println("send record: "+topic);
+  LOG_DEBUG("send record: %s\n", topic.c_str());
   uint8_t clientID = CLIENTID;
   if(settings.mqtt.active)
     clientID = CLIENTIDEXTERNAL;
   if(core_send_mqtt_message(clientID,topic,String(data),2,1)){
     if(!sysfile.delete_file(filename_bck.c_str()))
-      Serial.println("Couldn't delete file: "+filename_bck);
+      LOG_ERROR("Couldn't delete file: %s\n", filename_bck.c_str());
   }else{
     free(data);
     return false;
@@ -1317,19 +1344,19 @@ String pad2(int value) {
 }
 
 void update_started() {
-  Serial.println("CALLBACK:  HTTP update process started");
+  LOG_INFO("CALLBACK:  HTTP update process started\n");
 }
 
 void update_finished() {
-  Serial.println("CALLBACK:  HTTP update process finished");
+  LOG_INFO("CALLBACK:  HTTP update process finished\n");
 }
 
 void update_progress(int cur, int total) {
-  Serial.printf("CALLBACK:  HTTP update process at %d of %d bytes...\n", cur, total);
+  LOG_INFO("CALLBACK:  HTTP update process at %d of %d bytes...\n", cur, total);
 }
 
 void update_error(int err) {
-  Serial.printf("CALLBACK:  HTTP update fatal error code %d\n", err);
+  LOG_ERROR("CALLBACK:  HTTP update fatal error code %d\n", err);
 }
 
 // get certificate in ESP32 code formate from that link
@@ -1362,7 +1389,7 @@ const char* rootCACertificate = \
 "-----END CERTIFICATE-----\n" \
 "";
 
-String core_fota(String url){
+String Core::fota(String url){
 
   // Add x-MD5 to header 
   httpUpdate.onStart(update_started);
@@ -1386,16 +1413,16 @@ String core_fota(String url){
   switch (ret) {
     case HTTP_UPDATE_FAILED: 
       error = "HTTP_UPDATE_FAILED Error: ("+ String(httpUpdate.getLastError()) +") "+ httpUpdate.getLastErrorString();
-      Serial.println(error); 
+      LOG_ERROR("%s\n", error.c_str()); 
       break;
 
     case HTTP_UPDATE_NO_UPDATES: 
       error = "HTTP_UPDATE_NO_UPDATES";
-      Serial.println(error); 
+      LOG_WARN("%s\n", error.c_str()); 
       break;
 
     case HTTP_UPDATE_OK: 
-      Serial.println("HTTP_UPDATE_OK"); 
+      LOG_INFO("HTTP_UPDATE_OK\n"); 
       break;
   }
   return error;

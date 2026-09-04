@@ -30,7 +30,7 @@ bool mqttSend(uint8_t clientID, String topic, String data, uint8_t qos, bool ret
 */
 void APP::init(){
 
-  Serial.println("Init app" + String(FW_MODEL) +" module");
+  LOG_INFO("Init app %s module\n", FW_MODEL);
 
   load_settings();
   log_settings();
@@ -41,7 +41,7 @@ void APP::init(){
 void APP::loop(){
 
   if(timeoutInfo < millis()){
-    Serial.println("app is running");
+    LOG_DEBUG("app is running\n");
     timeoutInfo += 5000;
   }
 
@@ -49,7 +49,7 @@ void APP::loop(){
   if(Serial1.available()){
     msg += Serial1.readStringUntil('\n');
     #ifdef DEBUG_SNIFFER
-    Serial.println(msg+'\n');
+    LOG_DEBUG("%s\n", msg.c_str());
     #endif
     sniffer.core(msg, core_send_mqtt_message);
     msg = "";
@@ -64,8 +64,8 @@ void APP::loop(){
 */
 void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
 
-  Serial.println("app topic: "+topic);
-  Serial.println("payload: "+payload);
+  LOG_DEBUG("app topic: %s\n", topic.c_str());
+  LOG_DEBUG("payload: %s\n", payload.c_str());
   String subtopic = "";
   bool set = false;
   bool get = false;
@@ -98,7 +98,7 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
         break;
       }
     case app_not_found:
-      Serial.println("app topic not found");
+      LOG_WARN("app topic not found\n");
       break;
   }
 
@@ -129,21 +129,25 @@ appTopics_ APP::resolveOption(std::map<long, appTopics_> map, String topic) {
 
 bool APP::load_settings(){
   uint16_t len = sizeof(app_s);
-  Serial.printf("len:%d\n",len);
-  Serial.printf("filename %s \n",APP_SETTINGS_FILENAME);
+  LOG_DEBUG("len:%d\n",len);
+  LOG_DEBUG("filename %s \n",APP_SETTINGS_FILENAME);
   char data[1000];
   call.read_file(APP_SETTINGS_FILENAME,data,&len);
   memcpy(app_s.fw.version,data,sizeof(app_s.fw.version));
   String oldVersion = String(app_s.fw.version);
   String currentVersion = String(APP_VERSION);
-  Serial.println("prev app.version: "+oldVersion);
-  Serial.println("current app.version: "+currentVersion);
+  LOG_INFO("prev app.version: %s\n", oldVersion.c_str());
+  LOG_INFO("current app.version: %s\n", currentVersion.c_str());
+  if(oldVersion != currentVersion){
+    LOG_INFO("app version changed\n");
+    versionChanged = true;
+  }
   if(currentVersion.startsWith("0.") || currentVersion.startsWith("1.") || currentVersion.startsWith("2.")){
     memcpy(app_s.fw.version,data,sizeof(app_s));
     memset(app_s.fw.version,0,sizeof(app_s.fw.version));
     memcpy(app_s.fw.version,currentVersion.c_str(),currentVersion.length());
   }else{
-    Serial.println("resetting app settings..");
+    LOG_INFO("resetting app settings..\n");
     memset(app_s.fw.version,0,sizeof(app_s.fw.version));
     memcpy(app_s.fw.version,currentVersion.c_str(),currentVersion.length());
   }
@@ -153,9 +157,9 @@ bool APP::load_settings(){
 
 bool APP::store_settings(){
 
-  Serial.printf("filename %s \n",APP_SETTINGS_FILENAME);
+  LOG_DEBUG("filename %s \n",APP_SETTINGS_FILENAME);
   if(!call.write_file(APP_SETTINGS_FILENAME,app_s.fw.version,sizeof(app_s))){
-    Serial.println("failing writing file: "+String(APP_SETTINGS_FILENAME));
+    LOG_ERROR("failing writing file: %s\n", APP_SETTINGS_FILENAME);
     return false;
   }
   return true;
@@ -169,6 +173,6 @@ bool APP::reset_settings(){
 
 void APP::log_settings(){
 
-  Serial.println("app.md5: "+String(app_s.fw.md5));
+  LOG_DEBUG("app.md5: %s\n", app_s.fw.md5);
 
 }

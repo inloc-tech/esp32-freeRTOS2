@@ -117,9 +117,22 @@ struct user_settings {
     uint32_t     baudrate;
     uint32_t     config;
   } uart2;
+
+  struct fw_build { // last values reported to mqtt, on settings load
+    char         model[16];
+    char         variant[16];
+  } fw_build;
 };
 
 extern user_settings settings;
+
+#define LOG(lvl, fmt, ...) \
+  do { if ((lvl) <= settings.log.level) Serial.printf(fmt, ##__VA_ARGS__); } while(0)
+#define LOG_ERROR(fmt, ...)   LOG(1, fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)    LOG(2, fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)    LOG(3, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...)   LOG(4, fmt, ##__VA_ARGS__)
+#define LOG_VERBOSE(fmt, ...) LOG(5, fmt, ##__VA_ARGS__)
 
 bool settings_set_param(String param, String value);
 settingsTopics_ resolveOptionSettings(std::map<long, settingsTopics_> map, String param);

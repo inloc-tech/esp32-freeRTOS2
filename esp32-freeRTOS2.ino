@@ -32,6 +32,7 @@ TaskHandle_t MRTOS;
 
 String get_reset_reason(int reason);
 
+extern Core core;
 extern APP app;
 
 // MQTT
@@ -54,21 +55,36 @@ extern MODEMfreeRTOS mRTOS;
 extern SemaphoreHandle_t spiffsMutex;
 extern SYSFILE sysfile;
 
+static bool rebootCauseSent = false;
+
 void (*callback)(uint8_t);
 void mqttOnConnect(uint8_t clientID){ // Used on LTE comms
+  bool settingsChanged = false;
   DBGLOG(Debug,"mqtt with clientID: "+String(clientID)+" is connected - sending first message");
   mRTOS.mqtt_pushMessage(clientID,"/status","online",2,true);
-  mRTOS.mqtt_pushMessage(clientID,"/variant",String(FW_VARIANT),2,true);
-  mRTOS.mqtt_pushMessage(clientID,"/model",String(FW_MODEL),2,true);
-  mRTOS.mqtt_pushMessage(clientID,"/version",String(FW_VERSION),2,true);
-  mRTOS.mqtt_pushMessage(clientID,"/app_version",String(APP_VERSION),2,true);
-  mRTOS.mqtt_pushMessage(clientID,"/tech",mRTOS.get_technology(),2,true);
-  #if defined(ARDUINO_ESP32C5_DEV)
-    mRTOS.mqtt_pushMessage(clientID,"/reboot_cause_cpu0",get_reset_reason((int)esp_reset_reason()),2,true);
-  #else
-    mRTOS.mqtt_pushMessage(clientID,"/reboot_cause_cpu0",get_reset_reason(rtc_get_reset_reason(0)),2,true);
-    mRTOS.mqtt_pushMessage(clientID,"/reboot_cause_cpu1",get_reset_reason(rtc_get_reset_reason(1)),2,true);
-  #endif
+  if(core.model_changed()){
+    mRTOS.mqtt_pushMessage(clientID,"/model",String(FW_MODEL),2,true);
+    mRTOS.mqtt_pushMessage(clientID,"/tech",mRTOS.get_technology(),2,true);
+  }
+  if(core.variant_changed()){
+    mRTOS.mqtt_pushMessage(clientID,"/variant",String(FW_VARIANT),2,true);
+  }
+  if(core.version_changed()){
+    mRTOS.mqtt_pushMessage(clientID,"/version",String(FW_VERSION),2,true);
+  }
+  if(app.version_changed()){
+    mRTOS.mqtt_pushMessage(clientID,"/app_version",String(APP_VERSION),2,true);
+  }
+  
+  if(!rebootCauseSent){
+    #if defined(ARDUINO_ESP32C5_DEV)
+      mRTOS.mqtt_pushMessage(clientID,"/reboot_cause_cpu0",get_reset_reason((int)esp_reset_reason()),2,true);
+    #else
+      mRTOS.mqtt_pushMessage(clientID,"/reboot_cause_cpu0",get_reset_reason(rtc_get_reset_reason(0)),2,true);
+      mRTOS.mqtt_pushMessage(clientID,"/reboot_cause_cpu1",get_reset_reason(rtc_get_reset_reason(1)),2,true);
+    #endif
+    rebootCauseSent = true;
+  }
   mRTOS.mqtt_subscribeTopics(clientID);
   return;
 }
@@ -76,17 +92,28 @@ void mqttOnConnect(uint8_t clientID){ // Used on LTE comms
 // WARNING : YOU MUST IMPLEMENT IT IF YOU USE EspMQTTClient
 // This function is called once client 1 is connected (MQTT-WIFI)
 void onConnectionEstablished(){ // Used on wifi comms
+  bool settingsChanged = false;
   DBGLOG(Debug,"mqtt client 1 is connected - sending first message");
 
   mRTOS.mqtt_pushMessage(CLIENTID,"/status","online",2,true);
-  mRTOS.mqtt_pushMessage(CLIENTID,"/variant",String(FW_VARIANT),2,true);
-  mRTOS.mqtt_pushMessage(CLIENTID,"/model",String(FW_MODEL),2,true);
-  mRTOS.mqtt_pushMessage(CLIENTID,"/version",String(FW_VERSION),2,true);
-  mRTOS.mqtt_pushMessage(CLIENTID,"/app_version",String(APP_VERSION),2,true);
-  mRTOS.mqtt_pushMessage(CLIENTID,"/tech",mRTOS.get_technology(),2,true);
-  mRTOS.mqtt_pushMessage(CLIENTID,"/reboot_cause_cpu0",get_reset_reason((int)esp_reset_reason()),2,true);
-
-  mRTOS.mqtt_subscribeTopics(0);
+  if(core.model_changed()){
+    mRTOS.mqtt_pushMessage(CLIENTID,"/model",String(FW_MODEL),2,true);
+    mRTOS.mqtt_pushMessage(CLIENTID,"/tech",mRTOS.get_technology(),2,true);
+  }
+  if(core.variant_changed()){
+    mRTOS.mqtt_pushMessage(CLIENTID,"/variant",String(FW_VARIANT),2,true);
+  }
+  if(core.version_changed()){
+    mRTOS.mqtt_pushMessage(CLIENTID,"/version",String(FW_VERSION),2,true);
+  }
+  if(app.version_changed()){
+    mRTOS.mqtt_pushMessage(CLIENTID,"/app_version",String(APP_VERSION),2,true);
+  }
+  if(!rebootCauseSent){
+    mRTOS.mqtt_pushMessage(CLIENTID,"/reboot_cause_cpu0",get_reset_reason((int)esp_reset_reason()),2,true);
+    rebootCauseSent = true;
+  }
+  mRTOS.mqtt_subscribeTopics(CLIENTID);
 }
 
 // This function is called once client 2 is connected (MQTT-WIFI)
@@ -95,7 +122,7 @@ void onConnectionEstablished2(){
   if(!mRTOS.mqtt_pushMessage(CLIENTIDEXTERNAL,"/status","online",2,true))
     DBGLOG(Debug,"!! status message not sent for client CLIENTIDEXTERNAL");
 
-  mRTOS.mqtt_subscribeTopics(1);
+  mRTOS.mqtt_subscribeTopics(CLIENTIDEXTERNAL);
 }
 
 #ifdef ENABLE_LTE
@@ -103,7 +130,7 @@ void onConnectionEstablished2(){
   void network_lte_task(void *pvParameters){
     (void) pvParameters;
 
-    Serial.println("Initing LTE task..");
+    LOG_INFO("Initing LTE task..\n");
     // radio
     mRTOS.init(settings.modem.cops,settings.modem.tech,PWKEY); // initialize modem
 
@@ -153,7 +180,7 @@ void onConnectionEstablished2(){
   void app_task(void *pvParameters){
   (void) pvParameters;
 
-    Serial.println("Initing APP task..");
+    LOG_INFO("Initing APP task..\n");
 
     app.init();
 
@@ -168,16 +195,16 @@ void core_task(void *pvParameters);
 void core_task(void *pvParameters){
   (void) pvParameters;
 
-  Serial.println("Initing CORE task..");
+  LOG_INFO("Initing CORE task..\n");
 
-  core_init();
+  core.init();
       
   #ifdef ENABLE_AP
     ap.setCallbacks(new CALLBACKS_WIFI_AP());
   #endif
 
   for(;;){
-    core_loop();
+    core.loop();
     delay(1); // !! do not remove - switching between tasks
   }
 }
@@ -187,9 +214,9 @@ void mRTOS_task(void *pvParameters);
 void mRTOS_task(void *pvParameters){
   (void) pvParameters;
 
-  Serial.println("Initing mRTOS task..");
+  LOG_INFO("Initing mRTOS task..\n");
 
-  Serial.println("ssid: "+String(settings.wifi.ssid));
+  LOG_INFO("ssid: %s\n", settings.wifi.ssid);
   mRTOS.init(settings.wifi.ssid,settings.wifi.pwd);
   DBGLOG(Debug,"Wifi connecting with SSID: "+String(settings.wifi.ssid));
 
@@ -222,9 +249,9 @@ void mRTOS_task(void *pvParameters){
   }
   
   #ifdef ENABLE_LTE
-    Serial.println("waiting for modem to register on network..");
+    LOG_INFO("waiting for modem to register on network..\n");
     while(!mRTOS.isLTERegistered()) delay(100);
-    Serial.println("modem is registered");
+    LOG_INFO("modem is registered\n");
   #endif
 
   uint32_t wifiTimeout = 0;
@@ -292,7 +319,7 @@ void setup() {
 
   delay(500);
   DBGLOG(Info,"loading settings..");
-  core_load_settings();
+  core.load_settings();
 
   DBGLOG(Info,"logging settings..");
   delay(500);
