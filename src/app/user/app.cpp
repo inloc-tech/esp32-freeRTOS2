@@ -1,41 +1,24 @@
 
 #include "app.h"
-#include <ArduinoJson.h>
-#include "sniffer.h"
 
 extern CALLS call;
 extern SENSORS sensors;
 extern SYSFILE sysfile;
-
-/* user calls below */
-Sniffer sniffer;
 
 app_settings app_s = {
   .fw = {
     /* version */   APP_VERSION,
     /* md5 */       ""
   },
-  // user settings
-  .sniffer = {
-    /* enabled */   false,
-    /* channel */   0,
-    /* loop */      2000,
-  }
 };
 
-/*
-bool mqttSend(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
-  return call.mqtt_send(clientID,topic,data,qos,retain);
-}
-*/
 void APP::init(){
 
-  LOG_INFO("Init app %s module\n", FW_MODEL);
+  LOG_INFO("Init app DEMO module\n");
 
   load_settings();
   log_settings();
 
-  /* user code below */
 }
 
 void APP::loop(){
@@ -43,16 +26,6 @@ void APP::loop(){
   if(timeoutInfo < millis()){
     LOG_DEBUG("app is running\n");
     timeoutInfo += 5000;
-  }
-
-  /* user code below */
-  if(Serial1.available()){
-    msg += Serial1.readStringUntil('\n');
-    #ifdef DEBUG_SNIFFER
-    LOG_DEBUG("%s\n", msg.c_str());
-    #endif
-    sniffer.core(msg, core_send_mqtt_message);
-    msg = "";
   }
 
 }
@@ -71,11 +44,6 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
   bool get = false;
   bool store = false;
 
-  /*
-  * filter app/:model/:sniffer_uid - on this system there's only sniffer connected.
-  * No needed to check and choose route based on uid
-  */
-
   if(topic.endsWith("/set")){
     set = true;
     if(payload == "")
@@ -89,17 +57,10 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
   }
 
   switch(resolveOption(appTopics,topic)){
-    case settings_reset_:
+    case settings_reset_set_:
       reset_settings();
       break;
-    case sniffer_route_:
-      {
-        sniffer.parse_mqtt_messages(clientID,topic,payload,core_send_mqtt_message);
-        break;
-      }
-    case app_not_found:
-      LOG_WARN("app topic not found\n");
-      break;
+    // add your code here..
   }
 
   if(store){
@@ -109,7 +70,9 @@ void APP::parse_mqtt_messages(uint8_t clientID, String topic, String payload){
 
   if(set)
     core_send_mqtt_message(clientID,topic,"",2,true); // unpublish
+
 }
+
 
 appTopics_ APP::resolveOption(std::map<long, appTopics_> map, String topic) {
 
@@ -120,9 +83,6 @@ appTopics_ APP::resolveOption(std::map<long, appTopics_> map, String topic) {
   it = map.find(str_hash);
   if(it != map.end())
     return it->second;
-
-  if( topic.indexOf("/app/sniffer") > -1)
-    return sniffer_route_;
 
   return app_not_found;
 }
@@ -154,6 +114,7 @@ bool APP::load_settings(){
   store_settings();
   return true;
 }
+
 
 bool APP::store_settings(){
 

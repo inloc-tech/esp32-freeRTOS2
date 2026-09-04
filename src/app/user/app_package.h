@@ -10,7 +10,7 @@
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
 
-#define APP_VERSION        			 	"1.1.2"
+#define APP_VERSION        			 	"1.0.0"
 
 /////////////////////////////////////////////////////////////////////
 //                                                                 //
@@ -33,7 +33,7 @@
 * are only available for supported models. Each model has a unique identifier
 * and can only be updated with firmware that matches its model name. 
 */
-#define FW_MODEL                  "sniffer-gw"
+#define FW_MODEL                  "DEMO"
 
 
 /////////////////////////////////////////////////////////////////////
@@ -97,10 +97,10 @@
 
 // GPIO pins are defined in board.h
 #ifndef SERIAL1_GPIO_RX
-  #define SERIAL1_GPIO_RX 16
+  #define SERIAL1_GPIO_RX 27
 #endif
 #ifndef SERIAL1_GPIO_TX
-  #define SERIAL1_GPIO_TX 17
+  #define SERIAL1_GPIO_TX 14
 #endif
 #ifndef SERIAL1_GPIO_RTS
   #define SERIAL1_GPIO_RTS 13
@@ -111,7 +111,6 @@
 //                         DEBUG                             	   //
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
-//#define DEBUG_SNIFFER
 //#define DEBUG_MQTT_TOPIC
 //#define DEBUG_MQTT_PAYLOAD
 
@@ -120,6 +119,7 @@
 //                   Libraries macros                              //
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
-#define MQTT_TX_QUEUE_SIZE 20
+#define MQTT_TX_QUEUE_SIZE 10
+//#define DEBUG_HTTP
 
 #endif

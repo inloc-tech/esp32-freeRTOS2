@@ -10,6 +10,7 @@
 #include "credentials.h"
 #include "./../../../core.h"
 
+
 struct app_settings {
 
   struct fw {
@@ -17,26 +18,18 @@ struct app_settings {
     char         md5[16];
   }fw;
 
-  // user settings below
-  struct sniffer {
-    bool          enabled;
-    uint8_t       channel;
-    uint16_t      loop;
-  }sniffer;
-
 };
 
 // user can edit it
 enum appTopics_ {
-  settings_reset_,
-  sniffer_route_,
+  settings_reset_set_,
   app_not_found
 };
 
+
 // user can edit it
 static const std::map<long, appTopics_> appTopics {
-  { (long)std::hash<std::string>{}("/app/settings/reset/set"),           settings_reset_},
-  { (long)std::hash<std::string>{}("/app/sniffer"),                      sniffer_route_},
+  { (long)std::hash<std::string>{}("/app/settings/reset/set"),                  settings_reset_set_ },
 };
 
 class APP{
@@ -51,10 +44,6 @@ class APP{
     bool getValue(JsonObject& obj, String ref){return false;};
     bool version_changed(){return versionChanged;};
 
-    // user public funcs
-    
-    // user public vars
-
   private:
     // do not delete the following function
     appTopics_ resolveOption(std::map<long, appTopics_> map, String topic);
@@ -63,10 +52,8 @@ class APP{
     bool reset_settings();
     void log_settings();
 
-    uint32_t timeoutInfo = 5000;
+    uint32_t timeoutInfo;
     bool versionChanged = false;
-    uint32_t timeoutSniffer;
-    String msg;
 };
 
 #endif

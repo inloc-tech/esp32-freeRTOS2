@@ -183,58 +183,6 @@ Before build, set the target board. Available boards:
   - :prefix/fw/alarm/set : {}
   - :prefix/fw/js/code/set : (file)
 
-## WiFi
-
-  WiFi information and ARP scanning topics
-
-### Topics
-
-#### /fw/wifi/get
-  Request current WiFi connection info.\
-  Response payload: `{"ssid":"<ssid>","channel":<ch>,"rssi":<dBm>,"bssid":"<XX:XX:XX:XX:XX:XX>"}`
-
-#### /fw/wifi/arp/scan/get
-  Trigger an ARP scan of the local network (up to `ARP_SCAN_MAX_HOSTS` hosts, `ARP_TIMEOUT_MS` ms timeout).\
-  Updates the internal ARP table (IP → { mac, hostname }) with discovered hosts.\
-  Results are sent in **chunks of 5** entries via QOS 1.
-
-  **Optional payload** to scan a single IP instead of the full subnet:
-  ```json
-  {"ip": "10.168.1.1"}
-  ```
-  When a single IP is specified, only that one entry is returned (no chunking).
-
-  **Response format (full scan, per chunk):**
-  ```json
-  {"c":0,"t":3,"d":[["10.168.1.1","60d755cb1b9a","vodafonegw"],["10.168.1.65","aabbccddeeff","iPhone.lan"]]}
-  ```
-  - `c` — zero-based chunk index
-  - `t` — total number of chunks
-  - `d` — array of `[ip, mac, hostname]` entries (`hostname` is empty string if unresolved)
-
-  **Response format (single IP):**
-  ```json
-  {"d":[["10.168.1.1","60d755cb1b9a",""]]}
-  ```
-
-#### /fw/wifi/arpR/scan/get
-  Same as `/fw/wifi/arp/scan/get` but also performs a **reverse DNS (PTR) lookup** for each discovered host to resolve its hostname.\
-  Uses `ARP_TIMEOUT_MS` for ARP resolution and `DNS_TIMEOUT_MS` per DNS lookup.\
-  Results are stored in the same shared ARP table and sent in **chunks of 3** entries via QOS 1.
-
-  **Optional payload** to scan + resolve a single IP:
-  ```json
-  {"ip": "10.168.1.1"}
-  ```
-
-  **Response format:** identical to `/fw/wifi/arp/scan/get`.
-
-#### /fw/wifi/arp/table/get
-  Return the current in-memory ARP table without triggering a new scan.\
-  The table is populated by previous calls to `/fw/wifi/arp/scan/get` or `/fw/wifi/arpR/scan/get`.\
-  Results are sent in **chunks of 3** entries via QOS 1.\
-  **Response format:** identical to `/fw/wifi/arp/scan/get` (full scan format).
-
 ## MQTT
 
   Device can have one or two connections\
@@ -315,10 +263,6 @@ sends the following topic with keepalive period:
 - [/fw/js_program/get] (#fw_js_code_get_)
 - [/fw/serial/read/get] (#fw_serial_read_)
 - [/fw/serial/write/get] (#fw_serial_write_)
-- [/fw/wifi/arp/scan/get] (#wifi_arp_scan_get_)
-- [/fw/wifi/arpR/scan/get] (#wifi_arpR_scan_get_)
-- [/fw/wifi/arp/table/get] (#wifi_arp_table_get_)
-- [/fw/wifi/get] (#wifi_get_)
 
 ## Autorequests
   Use mqtt topic "#/fw/ar/set" to configure autorequests

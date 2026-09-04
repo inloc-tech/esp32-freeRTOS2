@@ -12,7 +12,7 @@
 #define APP_ACCUM_FILENAME "/home/app/accum.txt"
 #define APP_ACCUM_TP_FILENAME "/home/app/accumtp.txt"
 
-#define WIFI_SSID "Inloc-5G"
+#define WIFI_SSID "Inloc"
 #define WIFI_PASSWORD "inlocAPpwd"
 
 #define AP_PASSWORD "inlocAPpwd"
@@ -43,7 +43,7 @@
 // FOTA will only work if the FW_VARIANT matches the variant of the firmware 
 // being updated.
 #ifndef FW_VARIANT
-#define FW_VARIANT "esp32c5n4"
+#define FW_VARIANT "esp32c5"
 #endif
 
 #define LOG_ACTIVE true
