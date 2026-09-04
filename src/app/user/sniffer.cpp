@@ -247,7 +247,7 @@ void Sniffer::core(String text, MqttCallback callback){
 		String uid = String(snifferS.fw.uid);
 		if(uid == "")
 			return;
-		String topic = "/app/sniffer/"+uid+"/fota/update";
+		String topic = "/app/sniffer/"+uid+"/fota/update/status";
 		callback(clientId,topic,text,2,false);
 		delay(10);
 	}
