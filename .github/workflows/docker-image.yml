@@ -34,13 +34,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        board: [esp32, esp32c5n4]
+        board: [esp32, esp32c5]
         build: ${{ fromJson(needs.set-matrix.outputs.build) }}
     env:
       BASE_DIR: /root
-      PROJECT: freeRTOS2
+      PROJECT: esp32-freeRTOS2
       SKETCH: esp32-freeRTOS2
-      APP: sniffer-gw
+      APP: demo
       BUILD: ${{ matrix.build }}
       CONTAINER: deploy-freertos-${{ matrix.board }}-${{ matrix.build }}
       CONTAINERTAG: freertos-${{ matrix.board }}-${{ matrix.build }}

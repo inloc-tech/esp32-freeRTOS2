@@ -133,8 +133,8 @@ static jsval_t js_log(struct js *js, jsval_t *args, int nargs) {
   buf[sizeof(buf) - 1] = '\0';
   if(settings.log.level <= 3){
     call.mqtt_send(0,"/js/console",String(buf),1,0);
+    Serial.printf("\nJS->log: %s", buf);
   }
-  LOG_INFO("JS->log: %s\n", buf);
   return js_mkundef();
 }
 
@@ -253,7 +253,7 @@ static jsval_t js_write_rs485(struct js *js, jsval_t *args, int nargs){
       hex[1] = charBuf[i+1];
       int num = (int)strtol(hex, NULL, 16);
       data[j++] = num;
-      LOG_DEBUG("data: 0x%x \n",data[j-1]);
+      Serial.printf("data: 0x%x \n",data[j-1]);
     }
     uint16_t size = j;
     uint8_t error = sensors.rs485_write(unit_id,fc,addr,len,data,&size);
