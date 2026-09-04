@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.1.2 - Released
+	fix: mqtt topic update status
+	
 ## v1.1.1 - Released
 	fix: keepalive_period msg for sniffer
 	perf: use level for logs
