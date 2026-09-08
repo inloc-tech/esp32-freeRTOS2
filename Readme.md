@@ -288,6 +288,10 @@ sends the following topic with keepalive period:
 ### Available Topics
 
 - [/fw/get] (#fw_get_)
+- [/version/get]
+- [/app_version/get]
+- [/model/get]
+- [/variant/get]
 - [/fw/reboot/set] (#fw_reboot_)
 - [/fw/reset/set] (#fw_reset_)
 - [/fw/clean/records/set] (#fw_info_)

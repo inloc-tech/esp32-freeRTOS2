@@ -36,6 +36,10 @@ extern SemaphoreHandle_t spiffsMutex;
 extern SYSFILE sysfile;
 
 enum fwTopics_ {
+  version_get_,
+  app_version_get_,
+  model_get_,
+  variant_get_,
   fw_get_,
   fw_reboot_,
   fw_reset_,
@@ -72,6 +76,10 @@ enum fwTopics_ {
 };
 
 static const std::map<long, fwTopics_> fwTopics {
+  { (long)std::hash<std::string>{}("/version/get"),                         version_get_ },
+  { (long)std::hash<std::string>{}("/app_version/get"),                     app_version_get_ },
+  { (long)std::hash<std::string>{}("/model/get"),                           model_get_ },
+  { (long)std::hash<std::string>{}("/variant/get"),                         variant_get_ },
   { (long)std::hash<std::string>{}("/fw/get"),                              fw_get_ },
   { (long)std::hash<std::string>{}("/fw/reboot/set"),                       fw_reboot_ },
   { (long)std::hash<std::string>{}("/fw/reset/set"),                        fw_reset_ },

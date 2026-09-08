@@ -5,6 +5,7 @@ SemaphoreHandle_t spiffsMutex;
 CALLS call;
 SYSFILE sysfile;
 extern SENSORS sensors;
+//extern app_settings app_settings;
 APP app;
 Core core;
 
@@ -201,7 +202,7 @@ void Core::load_settings(){
       LOG_INFO("fw version changed, raise flag..\n");
       versionChanged = true;
     }
-    
+
     String version = String(settings.fw.version);
     if( ((version.startsWith("0.") || version.startsWith("1.") || version.startsWith("2."))) ){
       memcpy(settings.fw.version,data,sizeof(settings));
@@ -408,6 +409,29 @@ void Core::parse_mqtt_messages(){
     }
 
     switch(resolveOption(fwTopics,topic)){
+      case version_get_:
+        {
+          String version = String(settings.fw.version);
+          core_send_mqtt_message(clientID,topic_get,version,2,true);
+        }
+        break;
+      case app_version_get_:
+        {
+          core_send_mqtt_message(clientID,topic_get,APP_VERSION,2,true);
+        }
+        break;
+      case model_get_:
+        {
+          String model = String(settings.fw_build.model);
+          core_send_mqtt_message(clientID,topic_get,model,2,true);
+        }
+        break;
+      case variant_get_:
+        {
+          String variant = String(settings.fw_build.variant);
+          core_send_mqtt_message(clientID,topic_get,variant,2,true);
+        }
+        break;
       case settings_update_:
         {
           DeserializationError error = deserializeJson(doc, payload);
