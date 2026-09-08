@@ -128,6 +128,10 @@ void Sniffer::core(String text, MqttCallback callback){
 	}else if (text.indexOf("FIRMWARE=") > -1) {
 		text = text.substring(sizeof("FIRMWARE"));
 
+		bool fSendVersion = false;
+		bool fSendModel = false;
+		bool fSendVariant = false;
+
 		DeserializationError error = deserializeJson(doc, text);
 		if(error)
 			return;
@@ -143,6 +147,7 @@ void Sniffer::core(String text, MqttCallback callback){
 				if(value.length() <= sizeof(snifferS.fw.version)){
 					memset(snifferS.fw.version,0,sizeof(snifferS.fw.version));
 					memcpy(snifferS.fw.version,value.c_str(),value.length());
+					fSendVersion = true;
 				}
 			}
 			else if(key == "model"){
@@ -150,6 +155,7 @@ void Sniffer::core(String text, MqttCallback callback){
 				if(value.length() <= sizeof(snifferS.fw.model)){
 					memset(snifferS.fw.model,0,sizeof(snifferS.fw.model));
 					memcpy(snifferS.fw.model,value.c_str(),value.length());
+					fSendModel = true;
 				}
 			}
 			else if(key == "variant"){
@@ -157,6 +163,7 @@ void Sniffer::core(String text, MqttCallback callback){
 				if(value.length() <= sizeof(snifferS.fw.variant)){
 					memset(snifferS.fw.variant,0,sizeof(snifferS.fw.variant));
 					memcpy(snifferS.fw.variant,value.c_str(),value.length());
+					fSendVariant = true;
 				}
 			}else if(key == "mac"){
 				LOG_INFO("save mac:%s\n", value.c_str());
@@ -173,21 +180,24 @@ void Sniffer::core(String text, MqttCallback callback){
 		if(uid == "")
 			return;
 
-		String version = String(snifferS.fw.version);
-		String model = String(snifferS.fw.model);
-		String variant = String(snifferS.fw.variant);
-
-		String topic = "/app/sniffer/"+uid+"/version";
-		String payload = version;
-		callback(clientId,topic,payload,2,true);
-
-		topic = "/app/sniffer/"+uid+"/model";
-		payload = model;
-		callback(clientId,topic,payload,2,true);
-
-		topic = "/app/sniffer/"+uid+"/variant";
-		payload = variant;
-		callback(clientId,topic,payload,2,true);
+		if(fSendVersion){
+			String version = String(snifferS.fw.version);
+			String topic = "/app/sniffer/"+uid+"/version";
+			String payload = version;
+			callback(clientId,topic,payload,2,true);
+		}
+		if(fSendModel){
+			String model = String(snifferS.fw.model);
+			topic = "/app/sniffer/"+uid+"/model";
+			payload = model;
+			callback(clientId,topic,payload,2,true);
+		}
+		if(fSendVariant){
+			String variant = String(snifferS.fw.variant);
+			topic = "/app/sniffer/"+uid+"/variant";
+			payload = variant;
+			callback(clientId,topic,payload,2,true);
+		}
 
 	}else if (text.indexOf("SETTINGS=") > -1) {
 		text = text.substring(sizeof("SETTINGS"));
