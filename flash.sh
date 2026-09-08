@@ -229,7 +229,7 @@ if [ -n "${register_url}" ]; then
     echo "Registration succeeded."
 
     deviceId="$(printf '%s' "${resp_body}" | jq -r '.id // .deviceId // empty' 2>/dev/null || true)"
-    if [ -n "${deviceId}" ]; then
+    if [ -n "${id}" ]; then
       echo "Step 6/6: Printing label..."
       script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
       python3 "${script_dir}/print_label.py" --connection cups --device-id "${deviceId}" --text "${uid}" || \
