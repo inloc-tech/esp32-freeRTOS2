@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.1.3 - Released
+	fix(sniffer): non declaration vars
+	
 ## v1.1.2 - Released
 	fix: mqtt topic update status
 	

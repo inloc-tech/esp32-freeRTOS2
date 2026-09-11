@@ -11,6 +11,12 @@ After being tested with some devices, version can be changed to stable a version
 ## TODO
  - Implement MQTTS
 
+### 1.1.18-1.0.0
+	feat: supports printer clabel (#10)
+	feat(core): add new topics for fw and fw_build
+	perf: send version, model and variant only if each key is received from sniffer
+
+
 ### 1.1.17-1.0.0
 	fix: overwrite model and variant if it changes
 	perf: enable mqtt logs
