@@ -188,14 +188,14 @@ void Sniffer::core(String text, MqttCallback callback){
 		}
 		if(fSendModel){
 			String model = String(snifferS.fw.model);
-			topic = "/app/sniffer/"+uid+"/model";
-			payload = model;
+			String topic = "/app/sniffer/"+uid+"/model";
+			String payload = model;
 			callback(clientId,topic,payload,2,true);
 		}
 		if(fSendVariant){
 			String variant = String(snifferS.fw.variant);
-			topic = "/app/sniffer/"+uid+"/variant";
-			payload = variant;
+			String topic = "/app/sniffer/"+uid+"/variant";
+			String payload = variant;
 			callback(clientId,topic,payload,2,true);
 		}
 
