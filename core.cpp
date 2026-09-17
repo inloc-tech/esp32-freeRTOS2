@@ -300,6 +300,9 @@ void Core::init(){
 
   #ifdef SYNCHED_APP
     app.init();
+    if(app.version_changed()){
+      LOG_INFO("core app version changed, raise flag..\n");
+    }
   #endif
 }
 
@@ -409,29 +412,6 @@ void Core::parse_mqtt_messages(){
     }
 
     switch(resolveOption(fwTopics,topic)){
-      case version_get_:
-        {
-          String version = String(settings.fw.version);
-          core_send_mqtt_message(clientID,topic_get,version,2,true);
-        }
-        break;
-      case app_version_get_:
-        {
-          core_send_mqtt_message(clientID,topic_get,APP_VERSION,2,true);
-        }
-        break;
-      case model_get_:
-        {
-          String model = String(settings.fw_build.model);
-          core_send_mqtt_message(clientID,topic_get,model,2,true);
-        }
-        break;
-      case variant_get_:
-        {
-          String variant = String(settings.fw_build.variant);
-          core_send_mqtt_message(clientID,topic_get,variant,2,true);
-        }
-        break;
       case settings_update_:
         {
           DeserializationError error = deserializeJson(doc, payload);
@@ -825,7 +805,6 @@ void Core::parse_mqtt_messages(){
       core_send_mqtt_message(clientID,topic,"",1,true); // msg is delivered at least once
 
   }else if(topic.startsWith("/fw")){
-
     if(topic.endsWith("/set")){
       set = true;
       index = topic.lastIndexOf("/");
@@ -1218,7 +1197,6 @@ void Core::parse_mqtt_messages(){
 
     if(set)
       core_send_mqtt_message(clientID,topic,"",1,true); // msg is delivered at least once
-
   }else{
     app.parse_mqtt_messages(clientID,topic,payload);
   }
