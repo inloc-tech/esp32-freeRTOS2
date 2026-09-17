@@ -143,7 +143,8 @@ bool APP::load_settings(){
     versionChanged = true;
   }
   if(currentVersion.startsWith("0.") || currentVersion.startsWith("1.") || currentVersion.startsWith("2.")){
-    memcpy(app_s.fw.version,data,sizeof(app_s));
+    memset(&app_s,0,sizeof(app_s));
+    memcpy(&app_s,data,(size_t)len < sizeof(app_s) ? (size_t)len : sizeof(app_s));
     memset(app_s.fw.version,0,sizeof(app_s.fw.version));
     memcpy(app_s.fw.version,currentVersion.c_str(),currentVersion.length());
   }else{
