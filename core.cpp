@@ -1217,7 +1217,6 @@ bool core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t
 
   return sent;
 }
-}
 
 bool Core::store_record(String filename, const char* data, uint16_t len){
   String root = APP_PATH_RECORDS;
