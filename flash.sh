@@ -228,7 +228,7 @@ if [ -n "${register_url}" ]; then
   else
     echo "Registration succeeded."
 
-    deviceId="$(printf '%s' "${resp_body}" | jq -r '.id // .deviceId // empty' 2>/dev/null || true)"
+    deviceId="$(printf '%s' "${resp_body}" | jq -r '.Result.id // .Result.deviceId // .id // .deviceId // empty' 2>/dev/null || true)"
     if [ -n "${deviceId}" ]; then
       echo "Step 6/6: Printing label..."
       script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
