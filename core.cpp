@@ -363,8 +363,8 @@ void Core::parse_mqtt_messages(){
   if(msg == NULL)
     return;
 
-  LOG_DEBUG("<< [%d] topic: %s\n", msg->clientID, msg->topic);
-  LOG_VERBOSE("<< [%d] payload: %s\n", msg->clientID, msg->data);
+  LOG_INFO("<< [%d] topic: %s\n", msg->clientID, msg->topic);
+  LOG_INFO("<< [%d] payload: %s\n", msg->clientID, msg->data);
 
   bool set = false;
   bool get = false;
@@ -748,7 +748,7 @@ void Core::parse_mqtt_messages(){
         {
           DeserializationError error = deserializeJson(doc, payload);
           if(error){
-            DBGLOG(Error,"Not Json");
+            LOG_DEBUG("Not Json");
             return;
           }
           store = true;
@@ -981,11 +981,12 @@ void Core::parse_mqtt_messages(){
 
           sensors.parseArray(payload,arr,&len);
 
-          LOG_DEBUG("array: ");
+          String arrayLog = "array:";
           for(uint8_t i=0;i<len;i++){
-            LOG_DEBUG("%d ",arr[i]);
+            arrayLog += " ";
+            arrayLog += String(arr[i]);
           }
-          LOG_DEBUG("\n");
+          LOG_DEBUG("%s", arrayLog.c_str());
 
           if(len < 6)
             break; // array is too short to contain valid data
@@ -1205,10 +1206,17 @@ void Core::parse_mqtt_messages(){
 
 bool core_send_mqtt_message(uint8_t clientID, String topic, String data, uint8_t qos, bool retain){
 
-  LOG_DEBUG(">> [%d] topic: %s\n", clientID, topic.c_str());
-  LOG_VERBOSE(">> [%d] payload: %s\n", clientID, data.c_str());
-  
-  return call.mqtt_send(clientID,topic,data,qos,retain);
+  LOG_INFO(">> [%d] topic: %s\n", clientID, topic.c_str());
+  LOG_INFO(">> [%d] payload: %s\n", clientID, data.c_str());
+
+  bool sent = call.mqtt_send(clientID,topic,data,qos,retain);
+  if(!sent)
+    LOG_WARN("mqtt send failed [%d] topic: %s\n", clientID, topic.c_str());
+  else
+    LOG_DEBUG("mqtt send ok [%d] topic: %s\n", clientID, topic.c_str());
+
+  return sent;
+}
 }
 
 bool Core::store_record(String filename, const char* data, uint16_t len){

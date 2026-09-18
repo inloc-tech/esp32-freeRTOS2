@@ -93,7 +93,7 @@ void mqttOnConnect(uint8_t clientID){ // Used on LTE comms
 // This function is called once client 1 is connected (MQTT-WIFI)
 void onConnectionEstablished(){ // Used on wifi comms
   bool settingsChanged = false;
-  DBGLOG(Debug,"mqtt client 1 is connected - sending first message");
+  LOG_DEBUG("mqtt client 1 is connected - sending first message");
 
   mRTOS.mqtt_pushMessage(CLIENTID,"/status","online",2,true);
   if(core.model_changed()){
@@ -118,9 +118,9 @@ void onConnectionEstablished(){ // Used on wifi comms
 
 // This function is called once client 2 is connected (MQTT-WIFI)
 void onConnectionEstablished2(){
-  DBGLOG(Debug,"mqtt client 2 is connected - sending first message");
-  if(!mRTOS.mqtt_pushMessage(CLIENTIDEXTERNAL,"/status","online",2,true))
-    DBGLOG(Debug,"!! status message not sent for client CLIENTIDEXTERNAL");
+  LOG_DEBUG("mqtt client 2 is connected - sending first message");
+  if(!core_send_mqtt_message(CLIENTIDEXTERNAL,"/status","online",2,true))
+    LOG_DEBUG("!! status message not sent for client CLIENTIDEXTERNAL");
 
   mRTOS.mqtt_subscribeTopics(CLIENTIDEXTERNAL);
 }
@@ -218,7 +218,7 @@ void mRTOS_task(void *pvParameters){
 
   LOG_INFO("ssid: %s\n", settings.wifi.ssid);
   mRTOS.init(settings.wifi.ssid,settings.wifi.pwd);
-  DBGLOG(Debug,"Wifi connecting with SSID: "+String(settings.wifi.ssid));
+  LOG_DEBUG("Wifi connecting with SSID: %s", settings.wifi.ssid);
 
   String uid = MQTT_UID_PREFIX+mRTOS.macAddress();
 
@@ -226,7 +226,7 @@ void mRTOS_task(void *pvParameters){
   
   mRTOS.mqtt_configure_connection(CLIENTID,preTopic.c_str(),uid.c_str(),MQTT_HOST_1,MQTT_PORT_1,MQTT_USER_1,MQTT_PASSWORD_1);
   mRTOS.mqtt_set_will_topic(CLIENTID,MQTT_WILL_SUBTOPIC,MQTT_WILL_PAYLOAD);
-  DBGLOG(Debug,"mqtt client 1 configured");
+  LOG_DEBUG("mqtt client 1 configured");
 
   for(uint8_t i=0;i<NUMITEMS(mqtt_subscribe_topics);i++){
     mRTOS.mqtt_add_subscribe_topic(CLIENTID,i,mqtt_subscribe_topics[i]);
@@ -241,7 +241,7 @@ void mRTOS_task(void *pvParameters){
     String pass = String(settings.mqtt2.pass);
     mRTOS.mqtt_set_will_topic(CLIENTIDEXTERNAL,MQTT_WILL_SUBTOPIC,MQTT_WILL_PAYLOAD);
     mRTOS.mqtt_configure_connection(CLIENTIDEXTERNAL,preTopic.c_str(),uid.c_str(),host.c_str(),settings.mqtt2.port,user.c_str(),pass.c_str());
-    DBGLOG(Debug,"mqtt client 2 configured");
+    LOG_DEBUG("mqtt client 2 configured");
     for(uint8_t i=0;i<NUMITEMS(mqtt_subscribe_topics);i++){
       mRTOS.mqtt_add_subscribe_topic(CLIENTIDEXTERNAL,i,mqtt_subscribe_topics[i]);
     }
@@ -257,14 +257,14 @@ void mRTOS_task(void *pvParameters){
   uint32_t wifiTimeout = 0;
   
   #ifndef ENABLE_LTE
-    DBGLOG(Debug,"Wifi attempting with stored SSID: "+String(WIFI_SSID));
+    LOG_DEBUG("Wifi attempting with stored SSID: %s", WIFI_SSID);
     wifiTimeout = now() + 15;
     while(!mRTOS.isWifiConnected() && wifiTimeout > now()){
       delay(1); // !! do not remove - switching between tasks
     }
     
     if(!mRTOS.isWifiConnected()){
-      DBGLOG(Debug,"Wifi attempting with default SSID: "+String(WIFI_SSID));
+      LOG_DEBUG("Wifi attempting with default SSID: %s", WIFI_SSID);
       mRTOS.wifiReconnect(WIFI_SSID,WIFI_PASSWORD);
       wifiTimeout = now() + 15;
       while(!mRTOS.isWifiConnected() && wifiTimeout > now()){
@@ -275,25 +275,25 @@ void mRTOS_task(void *pvParameters){
     #ifdef ENABLE_AP
       if(!mRTOS.isWifiConnected()){
         ap.setup(mRTOS.macAddress());
-        DBGLOG(Debug,"Access Point started");
+        LOG_DEBUG("Access Point started");
         uint32_t timeout = now() + 5*60; // 5 minutes timeout
         for(;;){
           ap.loop();
           if(timeout < now()){
-            DBGLOG(Info,"Timeout for Access Point, try WiFi client once again");
+            LOG_DEBUG("Timeout for Access Point, try WiFi client once again");
             break;
           }
           delay(1); // !! do not remove - switching between tasks
         }
         ap.stop();
-        DBGLOG(Debug,"Access Point stopped");
+        LOG_DEBUG("Access Point stopped");
       }
     #endif
   #endif
 
   if(!mRTOS.isWifiConnected()){
     mRTOS.wifiReconnect(settings.wifi.ssid,settings.wifi.pwd);
-    DBGLOG(Debug,"Wifi attempting with stored SSID: "+String(settings.wifi.ssid));
+    LOG_DEBUG("Wifi attempting with stored SSID: %s", settings.wifi.ssid);
   }
   
   for(;;){
@@ -306,26 +306,27 @@ void mRTOS_task(void *pvParameters){
 void setup() {
 
   Serial.begin(SERIAL_LOG_BAUD);
-
+/*
   DBGINI(&Serial,ESP32Timestamp::TimestampNone);
   DBGSTA
   DBGLEV(Debug);
-  DBGLOG(Info,"Initing program..");
+*/
+  LOG_DEBUG("Initing program..");
 
   spiffsMutex = xSemaphoreCreateMutex();
 
-  DBGLOG(Info,"initing file system..");
+  LOG_DEBUG("initing file system..");
   sysfile.init();
 
   delay(500);
-  DBGLOG(Info,"loading settings..");
+  LOG_DEBUG("loading settings..");
   core.load_settings();
 
-  DBGLOG(Info,"logging settings..");
+  LOG_DEBUG("logging settings..");
   delay(500);
   settings_log();
 
-  DBGLOG(Info,"wait 2s for system to init..");
+  LOG_DEBUG("wait 2s for system to init..");
   delay(500);
 
 #if defined(ARDUINO_ESP32C5_DEV)  

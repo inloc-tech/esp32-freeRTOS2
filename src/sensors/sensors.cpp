@@ -24,7 +24,7 @@ DynamicJsonDocument doc(2048);
 #ifdef ENABLE_RS485
 bool calledInRS485Autorequest(String ref){
 
-  DBGLOG(Debug,"reading rs485 sensor \""+ref+"\"");
+  LOG_DEBUG("reading rs485 sensor \"%s\"", ref.c_str());
   return sensors.rs485_read(ref);
 }
 #endif
@@ -47,7 +47,7 @@ SENSORS::SENSORS(){}
 void SENSORS::init(){
 if(settings.uart2.active){
   #ifdef EXT_SERIAL_COMM
-    DBGLOG(Debug,"initing Serial1 - assigned to uart2 struct");
+    LOG_DEBUG("initing Serial1 - assigned to uart2 struct");
     Serial1.begin(settings.uart2.baudrate, settings.uart2.config, SERIAL1_GPIO_RX, SERIAL1_GPIO_TX);
   #elif defined ENABLE_RS485
     sensors.rs485_init(&Serial1,SERIAL1_GPIO_RX,SERIAL1_GPIO_TX,SERIAL1_GPIO_RTS);
@@ -63,16 +63,16 @@ bool SENSORS::init_ar(String data){
   //serializeJson(doc,Serial);
 
   if(error){
-    DBGLOG(Error,"Init ar Error parsing JSON");
+    LOG_DEBUG("Init ar Error parsing JSON");
     return false;
   }
 
-  DBGLOG(Debug,"JSON usage: "+String(doc.memoryUsage()));
+  LOG_DEBUG("JSON usage: %u", doc.memoryUsage());
 
   uint8_t index = 0;
 
   if(!doc.containsKey("autorequests")){
-    DBGLOG(Error,"autorequests key not present");
+    LOG_DEBUG("autorequests key not present");
     return false;
   }
 
@@ -118,11 +118,11 @@ bool SENSORS::init_ar(String data){
         int16_t period = sensor["period"];
 
         if(!rs485_add(index++,ref,modbus,type_str)){
-          DBGLOG(Debug,"couldn't add rs485 sensor");
+          LOG_DEBUG("couldn't add rs485 sensor");
         }
 
         if(!Ar.add(ref,period)){
-          DBGLOG(Debug,"couldn't add autorequest");
+          LOG_DEBUG("couldn't add autorequest");
         }
       }
     }
@@ -167,11 +167,11 @@ bool SENSORS::init_alarm(String data){
   }
 
   if(error){
-    DBGLOG(Error,"Alarm Error parsing JSON");
+    LOG_DEBUG("Alarm Error parsing JSON");
     return false;
   }
 
-  DBGLOG(Debug,"JSON usage: "+String(doc.memoryUsage()));
+  LOG_DEBUG("JSON usage: %u", doc.memoryUsage());
 
   uint8_t index = 0;
   if(doc["alarms"] != "null"){
@@ -269,7 +269,7 @@ void SENSORS::loop(){
 #ifdef ENABLE_RS485
   void SENSORS::rs485_init(HardwareSerial* port, uint8_t rx, uint8_t tx, uint8_t rts){
 
-    DBGLOG(Debug,"initing rs485");
+    LOG_DEBUG("initing rs485");
     modbus.setup(port,rx,tx,rts);
   }
 
@@ -376,7 +376,7 @@ void SENSORS::loop(){
       table[ref] = value;
 
     }else
-      DBGLOG(Error,"table refresh - type not found");
+      LOG_DEBUG("table refresh - type not found");
   }
 
   uint8_t SENSORS::rs485_read(String ref){
@@ -451,12 +451,12 @@ void SENSORS::loop(){
 
   void SENSORS::rs485_log(uint8_t index){
     #ifndef UNITTEST
-    DBGLOG(Debug,"ref: "+String(rs485_map[index].ref));
-    DBGLOG(Debug,"type: "+String(rs485_map[index].type));
-    DBGLOG(Debug,"unit_id: "+String(rs485_map[index].unit_id));
-    DBGLOG(Debug,"fc: "+String(rs485_map[index].fc));
-    DBGLOG(Debug,"address: "+String(rs485_map[index].address));
-    DBGLOG(Debug,"len: "+String(rs485_map[index].len));
+    LOG_DEBUG("ref: %s", String(rs485_map[index].ref).c_str());
+    LOG_DEBUG("type: %d", rs485_map[index].type);
+    LOG_DEBUG("unit_id: %d", rs485_map[index].unit_id);
+    LOG_DEBUG("fc: %d", rs485_map[index].fc);
+    LOG_DEBUG("address: %d", rs485_map[index].address);
+    LOG_DEBUG("len: %d", rs485_map[index].len);
     //DBGLOG(Debug,"value: "+String(rs485_map[index].value,MAX_VALUE_LEN));
     #endif
   }
@@ -483,8 +483,8 @@ bool SENSORS::app_add(uint8_t index, String ref, uint8_t type){
 
 void SENSORS::app_log(uint8_t index){
   #ifndef UNITTEST
-  DBGLOG(Debug,"ref: "+String(app_map[index].ref));
-  DBGLOG(Debug,"type: "+String(app_map[index].type));
+  LOG_DEBUG("ref: %s", String(app_map[index].ref).c_str());
+  LOG_DEBUG("type: %d", app_map[index].type);
   #endif
 }
 
@@ -559,7 +559,7 @@ bool SENSORS::parseArray(String array, uint16_t* arr, int16_t* len){
       if(value.length() > 0 && has_only_digits(value))
         arr[size++] = (uint16_t)value.toInt();
       else{
-        DBGLOG(Debug,"error parsing string array: "+String(value));
+        LOG_DEBUG("error parsing string array: %s", String(value).c_str());
         return false;
       }
       break;
@@ -568,7 +568,7 @@ bool SENSORS::parseArray(String array, uint16_t* arr, int16_t* len){
       if(value.length() > 0 && has_only_digits(value))
         arr[size++] = (uint16_t)value.toInt();
       else{
-        DBGLOG(Debug,"error parsing string array: "+String(value));
+        LOG_DEBUG("error parsing string array: %s", String(value).c_str());
         return false;
       }
 

@@ -169,7 +169,7 @@ bool CALLS::init_filesystem(String directory[], uint8_t len){
   LOG_DEBUG("dir size: %d \n",len);
   for(uint8_t i=0; i < len; i++){
     if(!sysfile.create_dir(directory[i].c_str()))
-      DBGLOG(Error,"-- create dir: "+ directory[i] +" has FAILED --");
+      LOG_DEBUG("-- create dir: %s has FAILED --", directory[i].c_str());
   }
 
   // list filesystem
@@ -195,7 +195,7 @@ bool CALLS::create_dir(String directory){
   xSemaphoreGive(spiffsMutex);
 
   if(!res)
-    DBGLOG(Error,"-- create dir: "+ directory +" has FAILED --");
+    LOG_DEBUG("-- create dir: %s has FAILED --", directory.c_str());
 
   return res;
 }
