@@ -60,7 +60,7 @@ static bool rebootCauseSent = false;
 void (*callback)(uint8_t);
 void mqttOnConnect(uint8_t clientID){ // Used on LTE comms
   bool settingsChanged = false;
-  DBGLOG(Debug,"mqtt with clientID: "+String(clientID)+" is connected - sending first message");
+  LOG_DEBUG("mqtt with clientID: %d is connected - sending first message", clientID);
   mRTOS.mqtt_pushMessage(clientID,"/status","online",2,true);
   if(core.model_changed()){
     mRTOS.mqtt_pushMessage(clientID,"/model",String(FW_MODEL),2,true);
@@ -95,24 +95,29 @@ void onConnectionEstablished(){ // Used on wifi comms
   bool settingsChanged = false;
   LOG_DEBUG("mqtt client 1 is connected - sending first message");
 
-  mRTOS.mqtt_pushMessage(CLIENTID,"/status","online",2,true);
-  if(core.model_changed()){
-    mRTOS.mqtt_pushMessage(CLIENTID,"/model",String(FW_MODEL),2,true);
-    mRTOS.mqtt_pushMessage(CLIENTID,"/tech",mRTOS.get_technology(),2,true);
-  }
-  if(core.variant_changed()){
-    mRTOS.mqtt_pushMessage(CLIENTID,"/variant",String(FW_VARIANT),2,true);
-  }
-  if(core.version_changed()){
-    mRTOS.mqtt_pushMessage(CLIENTID,"/version",String(FW_VERSION),2,true);
-  }
-  if(app.version_changed()){
-    mRTOS.mqtt_pushMessage(CLIENTID,"/app_version",String(APP_VERSION),2,true);
-  }
-  if(!rebootCauseSent){
-    mRTOS.mqtt_pushMessage(CLIENTID,"/reboot_cause_cpu0",get_reset_reason((int)esp_reset_reason()),2,true);
+  core_send_mqtt_message(CLIENTID,"/status","online",2,true);
+
+  //if(core.version_changed()){
+    core_send_mqtt_message(CLIENTID,"/version",String(FW_VERSION),2,true);
+  //}
+
+  //if(app.version_changed()){
+    core_send_mqtt_message(CLIENTID,"/app_version",String(APP_VERSION),2,true);
+  //}
+
+  //if(core.model_changed()){
+    core_send_mqtt_message(CLIENTID,"/model",String(FW_MODEL),2,true);
+    core_send_mqtt_message(CLIENTID,"/tech",mRTOS.get_technology(),2,true);
+  //}
+  //if(core.variant_changed()){
+    core_send_mqtt_message(CLIENTID,"/variant",String(FW_VARIANT),2,true);
+  //}
+  
+  //if(!rebootCauseSent){x
+    core_send_mqtt_message(CLIENTID,"/reboot_cause_cpu0",get_reset_reason((int)esp_reset_reason()),2,true);
     rebootCauseSent = true;
-  }
+  //}
+  delay(100);
   mRTOS.mqtt_subscribeTopics(CLIENTID);
 }
 
