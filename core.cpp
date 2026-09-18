@@ -205,7 +205,8 @@ void Core::load_settings(){
 
     String version = String(settings.fw.version);
     if( ((version.startsWith("0.") || version.startsWith("1.") || version.startsWith("2."))) ){
-      memcpy(settings.fw.version,data,sizeof(settings));
+      memset(&settings,0,sizeof(settings));
+      memcpy(&settings,data,(size_t)len < sizeof(settings) ? (size_t)len : sizeof(settings));
       memset(settings.fw.version,0,sizeof(settings.fw.version));
       memcpy(settings.fw.version,FW_VERSION,sizeof(FW_VERSION));
       call.write_file(FW_SETTINGS_FILENAME,settings.fw.version,sizeof(settings));
