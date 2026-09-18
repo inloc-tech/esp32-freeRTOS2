@@ -6,6 +6,7 @@
 
 #include <ArduinoJson.h>
 #include "mbedtls/md.h"
+#include <cstring>
 #include <map>
 
 //#include "package.h"
@@ -126,8 +127,23 @@ struct user_settings {
 
 extern user_settings settings;
 
+inline void log_printf(uint8_t lvl, const char* fmt, ...) {
+  if ((lvl) > settings.log.level)
+    return;
+
+  va_list args;
+  va_start(args, fmt);
+  Serial.vprintf(fmt, args);
+  va_end(args);
+
+  size_t fmt_len = strlen(fmt);
+  if (fmt_len == 0 || fmt[fmt_len - 1] != '\n')
+    Serial.print('\n');
+  Serial.print('\r');
+}
+
 #define LOG(lvl, fmt, ...) \
-  do { if ((lvl) <= settings.log.level) Serial.printf(fmt, ##__VA_ARGS__); } while(0)
+  do { log_printf((lvl), (fmt), ##__VA_ARGS__); } while(0)
 #define LOG_ERROR(fmt, ...)   LOG(1, fmt, ##__VA_ARGS__)
 #define LOG_WARN(fmt, ...)    LOG(2, fmt, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...)    LOG(3, fmt, ##__VA_ARGS__)
