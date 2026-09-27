@@ -11,6 +11,16 @@ After being tested with some devices, version can be changed to stable a version
 ## TODO
  - Implement MQTTS
 
+### 1.1.19-1.0.0
+	revert(core): rollback version, app_version, model and variant get topic
+	fix(core): load_settings overflow
+	perf: remove DBGLOG calls, LOG_DEBUG instead
+	perf: add '\r' after each print
+	chore: get correct id after device registration
+	revert: always send status, version, app_version, model, tech, variant and reboot_cause_cpu0 on startup
+	style(core): fix typo bracket
+	ci: uses modem-freeRTOS@1.0.12 - fix mqtt push message concurrency
+	
 ### 1.1.18-1.0.0
 	feat: supports printer clabel (#10)
 	feat(core): add new topics for fw and fw_build

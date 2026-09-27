@@ -1,8 +1,11 @@
 # Changelog
 
+## v1.1.4 - Released
+	perf(app): avoid possibly overflow while copying file to app_s structure
+	
 ## v1.1.3 - Released
 	fix(sniffer): non declaration vars
-	
+
 ## v1.1.2 - Released
 	fix: mqtt topic update status
 	

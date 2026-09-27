@@ -10,7 +10,7 @@
 //                                                                 //
 /////////////////////////////////////////////////////////////////////
 
-#define FW_VERSION	"1.1.18"
+#define FW_VERSION	"1.1.19"
 
 #ifndef ARP_TIMEOUT_MS
 #define ARP_TIMEOUT_MS 3000
